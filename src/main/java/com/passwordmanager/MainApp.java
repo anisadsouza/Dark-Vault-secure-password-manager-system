@@ -10,8 +10,7 @@ import com.passwordmanager.service.AuthService;
 import com.passwordmanager.service.CredentialService;
 import com.passwordmanager.service.EncryptionService;
 import com.passwordmanager.ui.ConsoleUI;
-import com.passwordmanager.ui.PasswordManagerFrame;
-import java.awt.GraphicsEnvironment;
+import com.passwordmanager.web.PasswordManagerWebServer;
 
 public class MainApp {
     public static void main(String[] args) {
@@ -23,12 +22,18 @@ public class MainApp {
 
         AuthService authService = new AuthService(userDAO);
         CredentialService credentialService = new CredentialService(credentialDAO, encryptionService);
-        if (GraphicsEnvironment.isHeadless()) {
+
+        if (args.length > 0 && "--console".equalsIgnoreCase(args[0])) {
             ConsoleUI consoleUI = new ConsoleUI(authService, credentialService);
             consoleUI.start();
             return;
         }
 
-        PasswordManagerFrame.launch(authService, credentialService);
+        PasswordManagerWebServer webServer = new PasswordManagerWebServer(authService, credentialService);
+        int port = 8080;
+        webServer.start(port);
+
+        System.out.println("Dark Vault is running at http://localhost:" + port);
+        System.out.println("Open that URL in Chrome to use the browser interface.");
     }
 }

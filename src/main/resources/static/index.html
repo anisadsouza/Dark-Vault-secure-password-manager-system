@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Vault</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<div class="background-grid"></div>
+
+<main class="shell">
+    <section id="auth-view" class="auth-layout">
+        <div class="tagline">
+            <p class="brand">DARK VAULT</p>
+            <h1>Dark Vault: Secure Password Manager System</h1>
+            <p class="sub">Encrypted credential storage with a cyber-themed local browser dashboard</p>
+        </div>
+
+        <div class="auth-panel">
+            <div class="tabs">
+                <button id="login-tab" class="tab-button active" type="button">Login</button>
+                <button id="register-tab" class="tab-button" type="button">Register</button>
+            </div>
+
+            <form id="login-form" class="auth-form">
+                <label>Username</label>
+                <input name="username" type="text" placeholder="Enter username" required>
+                <label>Password</label>
+                <input name="password" type="password" placeholder="Enter password" required>
+                <button type="submit" class="primary-button">Enter Vault</button>
+            </form>
+
+            <form id="register-form" class="auth-form hidden">
+                <label>Username</label>
+                <input name="username" type="text" placeholder="Create username" required>
+                <label>Password</label>
+                <input name="password" type="password" placeholder="At least 6 characters" required>
+                <label>Role</label>
+                <select name="role">
+                    <option value="STANDARD">Standard User</option>
+                    <option value="ADMIN">Admin</option>
+                </select>
+                <button type="submit" class="primary-button">Create Account</button>
+            </form>
+
+            <p id="auth-message" class="status-text"></p>
+        </div>
+    </section>
+
+    <section id="app-view" class="app-layout hidden">
+        <aside class="sidebar">
+            <p class="eyebrow">ACTIVE SESSION</p>
+            <h2 id="welcome-name">Dark Vault</h2>
+            <p id="welcome-role" class="sidebar-role">Secure session</p>
+            <div class="sidebar-stats">
+                <div class="stat-box">
+                    <span class="stat-label">Credentials</span>
+                    <strong id="stat-credentials">0</strong>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Sites</span>
+                    <strong id="stat-sites">0</strong>
+                </div>
+            </div>
+            <button id="add-button" class="primary-button" type="button">Add Credential</button>
+            <button id="logout-button" class="secondary-button" type="button">Logout</button>
+        </aside>
+
+        <section class="dashboard-preview">
+            <div class="dashboard-stack">
+                <div class="preview-card hero-card">
+                    <p class="eyebrow">VAULT DASHBOARD</p>
+                    <h3>Credential Grid</h3>
+                    <p>Search, reveal, edit, and delete credentials from a cyber-themed local browser dashboard.</p>
+                </div>
+
+                <div class="toolbar-panel">
+                    <input id="search-input" type="text" placeholder="Search by site or username">
+                    <button id="search-button" class="secondary-button" type="button">Search</button>
+                    <button id="clear-button" class="secondary-button" type="button">Clear</button>
+                </div>
+
+                <p id="dashboard-message" class="status-text"></p>
+
+                <div id="summary-strip" class="summary-strip"></div>
+                <div id="credential-grid" class="credential-grid"></div>
+
+                <div id="admin-panel" class="preview-card admin-panel hidden">
+                    <p class="eyebrow">ADMIN VIEW</p>
+                    <h3>Registered Users</h3>
+                    <div id="user-list" class="user-list"></div>
+                </div>
+            </div>
+        </section>
+    </section>
+</main>
+
+<div id="credential-modal" class="modal hidden">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">CREDENTIAL FORM</p>
+                <h3 id="modal-title">Add Credential</h3>
+            </div>
+            <button id="close-modal-button" class="icon-button" type="button">×</button>
+        </div>
+
+        <form id="credential-form" class="auth-form">
+            <input id="credential-id" name="credentialId" type="hidden">
+            <label>Site Name</label>
+            <input id="site-name" name="siteName" type="text" placeholder="e.g. GitHub" required>
+            <label>Account Username</label>
+            <input id="site-username" name="siteUsername" type="text" placeholder="e.g. your-email@example.com" required>
+            <label>Password</label>
+            <input id="site-password" name="password" type="password" placeholder="Enter password" required>
+            <label>Notes</label>
+            <textarea id="site-notes" name="notes" rows="4" placeholder="Optional notes"></textarea>
+            <button type="submit" class="primary-button">Save Credential</button>
+        </form>
+    </div>
+</div>
+
+<script src="/assets/app.js"></script>
+</body>
+</html>
