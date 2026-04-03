@@ -31,16 +31,20 @@
                 <button type="submit" class="primary-button">Enter Vault</button>
             </form>
 
-            <form id="register-form" class="auth-form hidden">
-                <label>Username</label>
-                <input name="username" type="text" placeholder="Create username" required>
-                <label>Password</label>
-                <input name="password" type="password" placeholder="At least 6 characters" required>
-                <label>Role</label>
-                <select name="role">
-                    <option value="STANDARD">Standard User</option>
-                    <option value="ADMIN">Admin</option>
-                </select>
+        <form id="register-form" class="auth-form hidden">
+            <label>Username</label>
+            <input name="username" type="text" placeholder="Create username" required>
+            <label>Password</label>
+            <input name="password" type="password" placeholder="At least 6 characters" required>
+            <div id="register-strength" class="strength-meter hidden">
+                <div class="strength-bar"><span id="register-strength-fill"></span></div>
+                <p id="register-strength-text" class="strength-text"></p>
+            </div>
+            <label>Role</label>
+            <select name="role">
+                <option value="STANDARD">Standard User</option>
+                <option value="ADMIN">Admin</option>
+            </select>
                 <button type="submit" class="primary-button">Create Account</button>
             </form>
 
@@ -114,6 +118,10 @@
             <input id="site-username" name="siteUsername" type="text" placeholder="e.g. your-email@example.com" required>
             <label>Password</label>
             <input id="site-password" name="password" type="password" placeholder="Enter password" required>
+            <div id="credential-strength" class="strength-meter hidden">
+                <div class="strength-bar"><span id="credential-strength-fill"></span></div>
+                <p id="credential-strength-text" class="strength-text"></p>
+            </div>
             <label>Notes</label>
             <textarea id="site-notes" name="notes" rows="4" placeholder="Optional notes"></textarea>
             <button type="submit" class="primary-button">Save Credential</button>

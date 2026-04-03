@@ -171,6 +171,35 @@ body {
     font-family: Menlo, Monaco, Consolas, monospace;
 }
 
+.strength-meter {
+    margin-top: -2px;
+    margin-bottom: 6px;
+}
+
+.strength-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.strength-bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    transition: width 0.2s ease, background 0.2s ease;
+}
+
+.strength-text {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-soft);
+    letter-spacing: 0.04em;
+    font-family: Menlo, Monaco, Consolas, monospace;
+}
+
 .auth-form input:focus,
 .auth-form select:focus,
 .auth-form textarea:focus {

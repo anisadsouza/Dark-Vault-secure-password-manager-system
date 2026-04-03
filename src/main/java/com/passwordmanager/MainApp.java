@@ -30,10 +30,52 @@ public class MainApp {
         }
 
         PasswordManagerWebServer webServer = new PasswordManagerWebServer(authService, credentialService);
-        int port = 8080;
-        webServer.start(port);
+        int port = startWebServer(webServer, args);
 
         System.out.println("Dark Vault is running at http://localhost:" + port);
         System.out.println("Open that URL in Chrome to use the browser interface.");
+    }
+
+    private static int resolvePort(String[] args) {
+        for (String arg : args) {
+            if (arg != null && arg.startsWith("--port=")) {
+                return Integer.parseInt(arg.substring("--port=".length()));
+            }
+        }
+
+        return 8080;
+    }
+
+    private static int startWebServer(PasswordManagerWebServer webServer, String[] args) {
+        int preferredPort = resolvePort(args);
+
+        if (hasExplicitPort(args)) {
+            webServer.start(preferredPort);
+            return preferredPort;
+        }
+
+        int[] fallbackPorts = {preferredPort, 8081, 8082, 8083};
+        for (int port : fallbackPorts) {
+            try {
+                webServer.start(port);
+                return port;
+            } catch (IllegalStateException exception) {
+                if (!exception.getMessage().contains("Unable to start web server on port")) {
+                    throw exception;
+                }
+            }
+        }
+
+        throw new IllegalStateException("Unable to start web server on ports 8080-8083.");
+    }
+
+    private static boolean hasExplicitPort(String[] args) {
+        for (String arg : args) {
+            if (arg != null && arg.startsWith("--port=")) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

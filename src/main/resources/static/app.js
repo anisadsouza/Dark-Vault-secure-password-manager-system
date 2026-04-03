@@ -4,6 +4,7 @@ const loginTab = document.getElementById("login-tab");
 const registerTab = document.getElementById("register-tab");
 const loginForm = document.getElementById("login-form");
 const registerForm = document.getElementById("register-form");
+const registerPasswordInput = registerForm.querySelector('input[name="password"]');
 const authMessage = document.getElementById("auth-message");
 const welcomeName = document.getElementById("welcome-name");
 const welcomeRole = document.getElementById("welcome-role");
@@ -28,6 +29,12 @@ const siteNameInput = document.getElementById("site-name");
 const siteUsernameInput = document.getElementById("site-username");
 const sitePasswordInput = document.getElementById("site-password");
 const siteNotesInput = document.getElementById("site-notes");
+const registerStrength = document.getElementById("register-strength");
+const registerStrengthFill = document.getElementById("register-strength-fill");
+const registerStrengthText = document.getElementById("register-strength-text");
+const credentialStrength = document.getElementById("credential-strength");
+const credentialStrengthFill = document.getElementById("credential-strength-fill");
+const credentialStrengthText = document.getElementById("credential-strength-text");
 
 let currentSession = null;
 let currentCredentials = [];
@@ -59,6 +66,8 @@ function bindEvents() {
             closeCredentialModal();
         }
     });
+    registerPasswordInput.addEventListener("input", () => updateStrengthMeter(registerPasswordInput.value, registerStrength, registerStrengthFill, registerStrengthText));
+    sitePasswordInput.addEventListener("input", () => updateStrengthMeter(sitePasswordInput.value, credentialStrength, credentialStrengthFill, credentialStrengthText));
     document.addEventListener("keydown", event => {
         if (event.key === "Escape" && !credentialModal.classList.contains("hidden")) {
             closeCredentialModal();
@@ -271,6 +280,7 @@ function openCredentialModal(credential = null) {
     siteUsernameInput.value = credential?.siteUsername || "";
     sitePasswordInput.value = credential?.password || "";
     siteNotesInput.value = credential?.notes || "";
+    updateStrengthMeter(sitePasswordInput.value, credentialStrength, credentialStrengthFill, credentialStrengthText);
     credentialModal.classList.remove("hidden");
 }
 
@@ -373,6 +383,37 @@ function showDashboardMessage(message, isError) {
     dashboardMessage.textContent = message;
     dashboardMessage.classList.toggle("error", isError);
     dashboardMessage.classList.toggle("success", Boolean(message) && !isError);
+}
+
+function updateStrengthMeter(password, wrapper, fill, text) {
+    if (!password) {
+        wrapper.classList.add("hidden");
+        fill.style.width = "0%";
+        text.textContent = "";
+        return;
+    }
+
+    wrapper.classList.remove("hidden");
+
+    let score = 0;
+    if (password.length >= 6) score += 1;
+    if (password.length >= 10) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+
+    const strengthMap = [
+        { width: "20%", label: "Very Weak", color: "#ff6b6b" },
+        { width: "40%", label: "Weak", color: "#ff9f43" },
+        { width: "60%", label: "Fair", color: "#ffd166" },
+        { width: "80%", label: "Strong", color: "#06d6a0" },
+        { width: "100%", label: "Very Strong", color: "#00f5d4" }
+    ];
+
+    const config = strengthMap[Math.max(score - 1, 0)];
+    fill.style.width = config.width;
+    fill.style.background = config.color;
+    text.textContent = `Password Strength: ${config.label}`;
 }
 
 function escapeHtml(value) {
