@@ -1,0 +1,6 @@
+target/
+.m2/
+*.class
+*.log
+password_manager.db
+.DS_Store
