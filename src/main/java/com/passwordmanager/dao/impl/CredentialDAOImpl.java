@@ -28,7 +28,8 @@ public class CredentialDAOImpl implements CredentialDAO {
             statement.setString(5, credential.getNotes());
             return statement.executeUpdate() > 0;
         } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to save credential: " + exception.getMessage(), exception);
+            System.out.println("Database error occurred");
+            throw new IllegalStateException("Database error occurred.", exception);
         }
     }
 
@@ -52,7 +53,8 @@ public class CredentialDAOImpl implements CredentialDAO {
                 }
             }
         } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to fetch credentials: " + exception.getMessage(), exception);
+            System.out.println("Database error occurred");
+            throw new IllegalStateException("Database error occurred.", exception);
         }
 
         return credentials;
@@ -77,7 +79,8 @@ public class CredentialDAOImpl implements CredentialDAO {
                 }
             }
         } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to fetch credential: " + exception.getMessage(), exception);
+            System.out.println("Database error occurred");
+            throw new IllegalStateException("Database error occurred.", exception);
         }
 
         return Optional.empty();
@@ -101,7 +104,8 @@ public class CredentialDAOImpl implements CredentialDAO {
             statement.setInt(6, credential.getUserId());
             return statement.executeUpdate() > 0;
         } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to update credential: " + exception.getMessage(), exception);
+            System.out.println("Database error occurred");
+            throw new IllegalStateException("Database error occurred.", exception);
         }
     }
 
@@ -115,7 +119,8 @@ public class CredentialDAOImpl implements CredentialDAO {
             statement.setInt(2, userId);
             return statement.executeUpdate() > 0;
         } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to delete credential: " + exception.getMessage(), exception);
+            System.out.println("Database error occurred");
+            throw new IllegalStateException("Database error occurred.", exception);
         }
     }
 
@@ -143,7 +148,8 @@ public class CredentialDAOImpl implements CredentialDAO {
                 }
             }
         } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to search credentials: " + exception.getMessage(), exception);
+            System.out.println("Database error occurred");
+            throw new IllegalStateException("Database error occurred.", exception);
         }
 
         return credentials;

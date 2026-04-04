@@ -35,7 +35,10 @@
                 <label>Username</label>
                 <input name="username" type="text" placeholder="Create username" required>
                 <label>Password</label>
-                <input name="password" type="password" placeholder="At least 6 characters" required>
+                <input id="register-password" name="password" type="password" placeholder="At least 8 characters" required>
+                <div class="input-action-row">
+                    <button id="register-generate-button" type="button" class="secondary-button inline-button">Generate Strong Password</button>
+                </div>
                 <div id="register-strength" class="strength-meter hidden">
                     <div class="strength-bar"><span id="register-strength-fill"></span></div>
                     <p id="register-strength-text" class="strength-text"></p>
@@ -43,13 +46,13 @@
                 <div class="password-tips">
                     <p>Password Tips</p>
                     <ul>
-                        <li>Use at least 6 characters</li>
+                        <li>Use at least 8 characters</li>
                         <li>Add an uppercase letter</li>
                         <li>Add a number</li>
                         <li>Add a special character</li>
                     </ul>
                 </div>
-                <button type="submit" class="primary-button">Create Account</button>
+                <button id="register-submit-button" type="submit" class="primary-button">Create Account</button>
             </form>
 
             <p id="auth-message" class="status-text"></p>
@@ -122,7 +125,10 @@
             <label>Account Username</label>
             <input id="site-username" name="siteUsername" type="text" placeholder="e.g. your-email@example.com" required>
             <label>Password</label>
-            <input id="site-password" name="password" type="password" placeholder="At least 6 chars, add uppercase, number, special" required>
+            <input id="site-password" name="password" type="password" placeholder="At least 8 chars, add uppercase, number, special" required>
+            <div class="input-action-row">
+                <button id="credential-generate-button" type="button" class="secondary-button inline-button">Generate Strong Password</button>
+            </div>
             <div id="credential-strength" class="strength-meter hidden">
                 <div class="strength-bar"><span id="credential-strength-fill"></span></div>
                 <p id="credential-strength-text" class="strength-text"></p>
@@ -130,16 +136,16 @@
             <div class="password-tips">
                 <p>Password Tips</p>
                 <ul>
-                    <li>Minimum 6 characters</li>
-                    <li>Uppercase makes it stronger</li>
-                    <li>Numbers help security</li>
-                    <li>Special characters improve strength</li>
+                    <li>Use at least 8 characters</li>
+                    <li>Add an uppercase letter to improve strength</li>
+                    <li>Add a number to improve strength</li>
+                    <li>Add a special character to improve strength</li>
                 </ul>
             </div>
             <p id="credential-form-message" class="status-text"></p>
             <label>Notes</label>
             <textarea id="site-notes" name="notes" rows="4" placeholder="Optional notes"></textarea>
-            <button type="submit" class="primary-button">Save Credential</button>
+            <button id="credential-save-button" type="submit" class="primary-button">Save Credential</button>
         </form>
     </div>
 </div>

@@ -4,7 +4,10 @@ const loginTab = document.getElementById("login-tab");
 const registerTab = document.getElementById("register-tab");
 const loginForm = document.getElementById("login-form");
 const registerForm = document.getElementById("register-form");
-const registerPasswordInput = registerForm.querySelector('input[name="password"]');
+const registerUsernameInput = registerForm.querySelector('input[name="username"]');
+const registerPasswordInput = document.getElementById("register-password");
+const registerGenerateButton = document.getElementById("register-generate-button");
+const registerSubmitButton = document.getElementById("register-submit-button");
 const authMessage = document.getElementById("auth-message");
 const welcomeName = document.getElementById("welcome-name");
 const welcomeRole = document.getElementById("welcome-role");
@@ -27,6 +30,8 @@ const siteNameInput = document.getElementById("site-name");
 const siteUsernameInput = document.getElementById("site-username");
 const sitePasswordInput = document.getElementById("site-password");
 const siteNotesInput = document.getElementById("site-notes");
+const credentialGenerateButton = document.getElementById("credential-generate-button");
+const credentialSaveButton = document.getElementById("credential-save-button");
 const credentialFormMessage = document.getElementById("credential-form-message");
 const registerStrength = document.getElementById("register-strength");
 const registerStrengthFill = document.getElementById("register-strength-fill");
@@ -60,18 +65,31 @@ function bindEvents() {
     addButton.addEventListener("click", () => openCredentialModal());
     closeModalButton.addEventListener("click", closeCredentialModal);
     credentialForm.addEventListener("submit", handleCredentialSave);
+    registerUsernameInput.addEventListener("input", updateRegisterButtonState);
     credentialModal.addEventListener("click", event => {
         if (event.target === credentialModal) {
             closeCredentialModal();
         }
     });
-    registerPasswordInput.addEventListener("input", () => updateStrengthMeter(registerPasswordInput.value, registerStrength, registerStrengthFill, registerStrengthText));
-    sitePasswordInput.addEventListener("input", () => updateStrengthMeter(sitePasswordInput.value, credentialStrength, credentialStrengthFill, credentialStrengthText));
+    registerPasswordInput.addEventListener("input", () => {
+        updateStrengthMeter(registerPasswordInput.value, registerStrength, registerStrengthFill, registerStrengthText);
+        updateRegisterButtonState();
+    });
+    registerGenerateButton.addEventListener("click", generateRegisterPassword);
+    siteNameInput.addEventListener("input", updateCredentialSaveButtonState);
+    siteUsernameInput.addEventListener("input", updateCredentialSaveButtonState);
+    sitePasswordInput.addEventListener("input", () => {
+        updateStrengthMeter(sitePasswordInput.value, credentialStrength, credentialStrengthFill, credentialStrengthText);
+        updateCredentialSaveButtonState();
+    });
+    credentialGenerateButton.addEventListener("click", generateCredentialPassword);
     document.addEventListener("keydown", event => {
         if (event.key === "Escape" && !credentialModal.classList.contains("hidden")) {
             closeCredentialModal();
         }
     });
+    updateRegisterButtonState();
+    updateCredentialSaveButtonState();
 }
 
 async function handleLogin(event) {
@@ -141,6 +159,8 @@ async function handleRegister(event) {
         }
 
         registerForm.reset();
+        updateStrengthMeter("", registerStrength, registerStrengthFill, registerStrengthText);
+        updateRegisterButtonState();
         switchTab("login");
         showAuthMessage(result.message || "User registered successfully.", false);
     } catch (error) {
@@ -201,26 +221,40 @@ function showAuthMessage(message, isError) {
 }
 
 async function loadCredentials(search = "") {
-    const query = search ? `?search=${encodeURIComponent(search)}` : "";
-    const response = await fetch(`/api/credentials${query}`);
-    const result = await response.json();
+    try {
+        const query = search ? `?search=${encodeURIComponent(search)}` : "";
+        const response = await fetch(`/api/credentials${query}`);
+        const result = await response.json();
 
-    currentCredentials = result.items || [];
-    renderCredentialGrid(currentCredentials);
-    statCredentials.textContent = String(currentCredentials.length);
-    statSites.textContent = String(new Set(currentCredentials.map(item => item.siteName)).size);
+        if (!response.ok) {
+            showDashboardMessage(result.error || "Database error occurred.", true);
+            return;
+        }
 
-    if (search) {
-        showDashboardMessage(`Showing ${currentCredentials.length} matching credential(s).`, false);
-    } else {
-        showDashboardMessage(currentCredentials.length ? "Vault synchronized." : "No credentials stored yet.", false);
+        currentCredentials = result.items || [];
+        renderCredentialGrid(currentCredentials);
+        statCredentials.textContent = String(currentCredentials.length);
+        statSites.textContent = String(new Set(currentCredentials.map(item => item.siteName)).size);
+        showDashboardMessage(currentCredentials.length ? "Vault synchronized." : "Your vault is empty. Add your first credential.", false);
+    } catch (error) {
+        showDashboardMessage("Unable to load credentials.", true);
     }
 }
 
 async function loadSummary() {
-    const response = await fetch("/api/summary");
-    const result = await response.json();
-    renderSummary(result.items || []);
+    try {
+        const response = await fetch("/api/summary");
+        const result = await response.json();
+
+        if (!response.ok) {
+            summaryStrip.innerHTML = "";
+            return;
+        }
+
+        renderSummary(result.items || []);
+    } catch (error) {
+        summaryStrip.innerHTML = "";
+    }
 }
 
 function renderCredentialGrid(credentials) {
@@ -228,8 +262,8 @@ function renderCredentialGrid(credentials) {
         credentialGrid.innerHTML = `
             <div class="preview-card">
                 <p class="eyebrow">EMPTY VAULT</p>
-                <h3>No credentials found</h3>
-                <p>Add a credential to start filling the dashboard.</p>
+                <h3>Your vault is empty. Add your first credential.</h3>
+                <p>Store website credentials here and keep them protected in one place.</p>
             </div>
         `;
         return;
@@ -281,6 +315,7 @@ function openCredentialModal(credential = null) {
     siteNotesInput.value = credential?.notes || "";
     showCredentialFormMessage("", false);
     updateStrengthMeter(sitePasswordInput.value, credentialStrength, credentialStrengthFill, credentialStrengthText);
+    updateCredentialSaveButtonState();
     credentialModal.classList.remove("hidden");
 }
 
@@ -304,24 +339,32 @@ async function handleCredentialSave(event) {
     const formData = new FormData(credentialForm);
     const body = new URLSearchParams(formData);
     const isEdit = Boolean(credentialIdInput.value);
+    credentialSaveButton.disabled = true;
 
-    const response = await fetch("/api/credentials", {
-        method: isEdit ? "PUT" : "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-        },
-        body
-    });
+    try {
+        const response = await fetch("/api/credentials", {
+            method: isEdit ? "PUT" : "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+            },
+            body
+        });
 
-    const result = await response.json();
-    if (!response.ok) {
-        showCredentialFormMessage(result.error || "Invalid input", true);
-        return;
+        const result = await response.json();
+        if (!response.ok) {
+            showCredentialFormMessage(result.error || "Invalid input", true);
+            updateCredentialSaveButtonState();
+            return;
+        }
+
+        closeCredentialModal();
+        await Promise.all([loadCredentials(searchInput.value.trim()), loadSummary()]);
+        showDashboardMessage(isEdit ? "Credential updated successfully." : "Credential saved successfully.", false);
+    } catch (error) {
+        showCredentialFormMessage("Unable to save credential.", true);
+    } finally {
+        updateCredentialSaveButtonState();
     }
-
-    closeCredentialModal();
-    await Promise.all([loadCredentials(searchInput.value.trim()), loadSummary()]);
-    showDashboardMessage(isEdit ? "Credential updated successfully." : "Credential added successfully.", false);
 }
 
 async function deleteCredential(credentialId) {
@@ -410,7 +453,7 @@ function updateStrengthMeter(password, wrapper, fill, text) {
     const passedChecks = Object.values(checks).filter(Boolean).length;
 
     let config = { width: "34%", label: "Weak", color: "#ff6b6b" };
-    if (passedChecks >= 4) {
+    if (passedChecks === 4) {
         config = { width: "100%", label: "Strong", color: "#00f5d4" };
     } else if (passedChecks >= 2) {
         config = { width: "67%", label: "Medium", color: "#ffd166" };
@@ -422,8 +465,12 @@ function updateStrengthMeter(password, wrapper, fill, text) {
 }
 
 function validateAuthInput(username, password, requireStrongPassword) {
-    if (!username || !password) {
-        return "Field cannot be empty";
+    if (!username) {
+        return "Username cannot be empty";
+    }
+
+    if (!password) {
+        return "Password cannot be empty";
     }
 
     if (!isValidInput(username)) {
@@ -441,8 +488,16 @@ function validateAuthInput(username, password, requireStrongPassword) {
 }
 
 function validateCredentialInput(siteName, siteUsername, password) {
-    if (!siteName || !siteUsername || !password) {
-        return "Field cannot be empty";
+    if (!siteName) {
+        return "Site name cannot be empty";
+    }
+
+    if (!siteUsername) {
+        return "Account username cannot be empty";
+    }
+
+    if (!password) {
+        return "Password cannot be empty";
     }
 
     if (!isValidInput(siteName) || !isValidInput(siteUsername)) {
@@ -453,8 +508,8 @@ function validateCredentialInput(siteName, siteUsername, password) {
 }
 
 function validatePassword(password) {
-    if (password.length < 6) {
-        return "Password too short";
+    if (password.length < 8) {
+        return "Password must be at least 8 characters";
     }
 
     return "";
@@ -462,7 +517,7 @@ function validatePassword(password) {
 
 function getPasswordChecks(password) {
     return {
-        length: password.length >= 6,
+        length: password.length >= 8,
         uppercase: /[A-Z]/.test(password),
         number: /[0-9]/.test(password),
         special: /[^A-Za-z0-9]/.test(password)
@@ -477,6 +532,66 @@ function showCredentialFormMessage(message, isError) {
     credentialFormMessage.textContent = message;
     credentialFormMessage.classList.toggle("error", isError);
     credentialFormMessage.classList.toggle("success", Boolean(message) && !isError);
+}
+
+function updateRegisterButtonState() {
+    registerSubmitButton.disabled = !registerUsernameInput.value.trim() || !registerPasswordInput.value;
+}
+
+function updateCredentialSaveButtonState() {
+    credentialSaveButton.disabled = !siteNameInput.value.trim() || !siteUsernameInput.value.trim() || !sitePasswordInput.value;
+}
+
+function generateRegisterPassword() {
+    registerPasswordInput.value = generateStrongPassword();
+    updateStrengthMeter(registerPasswordInput.value, registerStrength, registerStrengthFill, registerStrengthText);
+    updateRegisterButtonState();
+    showAuthMessage("Strong password generated.", false);
+}
+
+function generateCredentialPassword() {
+    sitePasswordInput.value = generateStrongPassword();
+    updateStrengthMeter(sitePasswordInput.value, credentialStrength, credentialStrengthFill, credentialStrengthText);
+    updateCredentialSaveButtonState();
+    showCredentialFormMessage("Strong password generated.", false);
+}
+
+function generateStrongPassword() {
+    const uppercase = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const lowercase = "abcdefghijkmnopqrstuvwxyz";
+    const numbers = "23456789";
+    const special = "!@#$%^&*?";
+    const allCharacters = uppercase + lowercase + numbers + special;
+    const characters = [
+        randomCharacter(uppercase),
+        randomCharacter(lowercase),
+        randomCharacter(numbers),
+        randomCharacter(special)
+    ];
+
+    while (characters.length < 12) {
+        characters.push(randomCharacter(allCharacters));
+    }
+
+    return shuffleCharacters(characters).join("");
+}
+
+function randomCharacter(characters) {
+    const index = Math.floor(Math.random() * characters.length);
+    return characters[index];
+}
+
+function shuffleCharacters(characters) {
+    const copy = [...characters];
+
+    for (let index = copy.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        const current = copy[index];
+        copy[index] = copy[swapIndex];
+        copy[swapIndex] = current;
+    }
+
+    return copy;
 }
 
 function escapeHtml(value) {

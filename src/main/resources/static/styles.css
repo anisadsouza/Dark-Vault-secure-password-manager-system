@@ -224,6 +224,21 @@ body {
     line-height: 1.6;
 }
 
+.input-action-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -2px;
+    margin-bottom: 4px;
+}
+
+.inline-button {
+    margin-top: 0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+}
+
 .auth-form input:focus,
 .auth-form select:focus,
 .auth-form textarea:focus {
@@ -255,6 +270,14 @@ body {
 .secondary-button:hover,
 .tab-button:hover {
     transform: translateY(-1px);
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+    transform: none;
+    box-shadow: none;
 }
 
 .eyebrow {

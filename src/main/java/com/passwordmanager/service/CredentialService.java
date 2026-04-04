@@ -90,13 +90,19 @@ public class CredentialService {
 
     private void validateCredentialFields(String siteName, String siteUsername, String password) {
         if (siteName == null || siteName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Site name cannot be empty.");
+            throw new IllegalArgumentException("Site name cannot be empty");
         }
         if (siteUsername == null || siteUsername.trim().isEmpty()) {
-            throw new IllegalArgumentException("Site username cannot be empty.");
+            throw new IllegalArgumentException("Account username cannot be empty");
         }
         if (password == null || password.trim().isEmpty()) {
-            throw new IllegalArgumentException("Password cannot be empty.");
+            throw new IllegalArgumentException("Password cannot be empty");
+        }
+        if (password.length() < 8) {
+            throw new IllegalArgumentException("Password must be at least 8 characters");
+        }
+        if (siteName.contains("<") || siteName.contains(">") || siteUsername.contains("<") || siteUsername.contains(">")) {
+            throw new IllegalArgumentException("Invalid input");
         }
     }
 

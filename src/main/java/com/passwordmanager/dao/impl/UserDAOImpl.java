@@ -25,7 +25,8 @@ public class UserDAOImpl implements UserDAO {
             statement.setString(3, user.getRole());
             return statement.executeUpdate() > 0;
         } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to save user: " + exception.getMessage(), exception);
+            System.out.println("Database error occurred");
+            throw new IllegalStateException("Database error occurred.", exception);
         }
     }
 
@@ -43,7 +44,8 @@ public class UserDAOImpl implements UserDAO {
                 }
             }
         } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to fetch user: " + exception.getMessage(), exception);
+            System.out.println("Database error occurred");
+            throw new IllegalStateException("Database error occurred.", exception);
         }
 
         return Optional.empty();
@@ -61,7 +63,8 @@ public class UserDAOImpl implements UserDAO {
                 users.add(mapUser(resultSet));
             }
         } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to fetch users: " + exception.getMessage(), exception);
+            System.out.println("Database error occurred");
+            throw new IllegalStateException("Database error occurred.", exception);
         }
 
         return users;

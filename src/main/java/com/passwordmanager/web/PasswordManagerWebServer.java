@@ -92,6 +92,8 @@ public class PasswordManagerWebServer {
             WebUtils.sendJson(exchange, 400, "{\"success\":false,\"error\":\"Registration failed.\"}");
         } catch (IllegalArgumentException exception) {
             WebUtils.sendJson(exchange, 400, "{\"success\":false,\"error\":\"" + WebUtils.escapeJson(exception.getMessage()) + "\"}");
+        } catch (IllegalStateException exception) {
+            sendServerError(exchange);
         }
     }
 
@@ -119,6 +121,8 @@ public class PasswordManagerWebServer {
             WebUtils.sendJson(exchange, 200, buildSessionJson(user));
         } catch (IllegalArgumentException exception) {
             WebUtils.sendJson(exchange, 400, "{\"success\":false,\"error\":\"" + WebUtils.escapeJson(exception.getMessage()) + "\"}");
+        } catch (IllegalStateException exception) {
+            sendServerError(exchange);
         }
     }
 
@@ -200,6 +204,8 @@ public class PasswordManagerWebServer {
             WebUtils.sendJson(exchange, 405, "{\"error\":\"Method not allowed.\"}");
         } catch (IllegalArgumentException exception) {
             WebUtils.sendJson(exchange, 400, "{\"success\":false,\"error\":\"" + WebUtils.escapeJson(exception.getMessage()) + "\"}");
+        } catch (IllegalStateException exception) {
+            sendServerError(exchange);
         }
     }
 
@@ -210,24 +216,28 @@ public class PasswordManagerWebServer {
             return;
         }
 
-        Map<String, Integer> summary = credentialService.buildSiteSummary(userOptional.get().getUserId());
-        StringBuilder json = new StringBuilder();
-        json.append("{\"items\":[");
+        try {
+            Map<String, Integer> summary = credentialService.buildSiteSummary(userOptional.get().getUserId());
+            StringBuilder json = new StringBuilder();
+            json.append("{\"items\":[");
 
-        boolean first = true;
-        for (Map.Entry<String, Integer> entry : summary.entrySet()) {
-            if (!first) {
-                json.append(',');
+            boolean first = true;
+            for (Map.Entry<String, Integer> entry : summary.entrySet()) {
+                if (!first) {
+                    json.append(',');
+                }
+                first = false;
+                json.append("{")
+                        .append("\"siteName\":\"").append(WebUtils.escapeJson(entry.getKey())).append("\",")
+                        .append("\"count\":").append(entry.getValue())
+                        .append("}");
             }
-            first = false;
-            json.append("{")
-                    .append("\"siteName\":\"").append(WebUtils.escapeJson(entry.getKey())).append("\",")
-                    .append("\"count\":").append(entry.getValue())
-                    .append("}");
-        }
 
-        json.append("]}");
-        WebUtils.sendJson(exchange, 200, json.toString());
+            json.append("]}");
+            WebUtils.sendJson(exchange, 200, json.toString());
+        } catch (IllegalStateException exception) {
+            sendServerError(exchange);
+        }
     }
 
     private void handleUsers(HttpExchange exchange) throws IOException {
@@ -312,5 +322,9 @@ public class PasswordManagerWebServer {
         }
 
         return WebUtils.parseFormData(query).getOrDefault(key, "");
+    }
+
+    private void sendServerError(HttpExchange exchange) throws IOException {
+        WebUtils.sendJson(exchange, 500, "{\"success\":false,\"error\":\"Database error occurred.\"}");
     }
 }
