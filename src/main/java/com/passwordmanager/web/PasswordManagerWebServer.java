@@ -38,7 +38,6 @@ public class PasswordManagerWebServer {
             server.createContext("/api/session", this::handleSession);
             server.createContext("/api/credentials", this::handleCredentials);
             server.createContext("/api/summary", this::handleSummary);
-            server.createContext("/api/users", this::handleUsers);
             server.createContext("/api/health", this::handleHealth);
             server.setExecutor(Executors.newCachedThreadPool());
             server.start();
@@ -240,39 +239,6 @@ public class PasswordManagerWebServer {
         }
     }
 
-    private void handleUsers(HttpExchange exchange) throws IOException {
-        Optional<User> userOptional = currentUser(exchange);
-        if (userOptional.isEmpty()) {
-            WebUtils.sendJson(exchange, 401, "{\"success\":false,\"error\":\"Please log in first.\"}");
-            return;
-        }
-
-        User user = userOptional.get();
-        if (!user.canManageUsers()) {
-            WebUtils.sendJson(exchange, 403, "{\"success\":false,\"error\":\"Admin access required.\"}");
-            return;
-        }
-
-        List<User> users = authService.getAllUsers();
-        StringBuilder json = new StringBuilder();
-        json.append("{\"items\":[");
-
-        for (int index = 0; index < users.size(); index++) {
-            User item = users.get(index);
-            if (index > 0) {
-                json.append(',');
-            }
-            json.append("{")
-                    .append("\"userId\":").append(item.getUserId()).append(",")
-                    .append("\"username\":\"").append(WebUtils.escapeJson(item.getUsername())).append("\",")
-                    .append("\"displayRole\":\"").append(WebUtils.escapeJson(item.getDisplayRole())).append("\"")
-                    .append("}");
-        }
-
-        json.append("]}");
-        WebUtils.sendJson(exchange, 200, json.toString());
-    }
-
     private void handleHealth(HttpExchange exchange) throws IOException {
         WebUtils.sendJson(exchange, 200, "{\"status\":\"ok\",\"message\":\"Web server is running.\"}");
     }
@@ -310,8 +276,7 @@ public class PasswordManagerWebServer {
                 + "\"userId\":" + user.getUserId() + ","
                 + "\"username\":\"" + WebUtils.escapeJson(user.getUsername()) + "\","
                 + "\"role\":\"" + WebUtils.escapeJson(user.getRole()) + "\","
-                + "\"displayRole\":\"" + WebUtils.escapeJson(user.getDisplayRole()) + "\","
-                + "\"canManageUsers\":" + user.canManageUsers()
+                + "\"displayRole\":\"" + WebUtils.escapeJson(user.getDisplayRole()) + "\""
                 + "}";
     }
 

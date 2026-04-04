@@ -9,7 +9,6 @@ import com.passwordmanager.service.AESEncryptionService;
 import com.passwordmanager.service.AuthService;
 import com.passwordmanager.service.CredentialService;
 import com.passwordmanager.service.EncryptionService;
-import com.passwordmanager.ui.ConsoleUI;
 import com.passwordmanager.web.PasswordManagerWebServer;
 
 public class MainApp {
@@ -22,12 +21,6 @@ public class MainApp {
 
         AuthService authService = new AuthService(userDAO);
         CredentialService credentialService = new CredentialService(credentialDAO, encryptionService);
-
-        if (args.length > 0 && "--console".equalsIgnoreCase(args[0])) {
-            ConsoleUI consoleUI = new ConsoleUI(authService, credentialService);
-            consoleUI.start();
-            return;
-        }
 
         PasswordManagerWebServer webServer = new PasswordManagerWebServer(authService, credentialService);
         int port = startWebServer(webServer, args);

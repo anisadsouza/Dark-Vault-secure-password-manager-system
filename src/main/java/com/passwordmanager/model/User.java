@@ -48,7 +48,5 @@ public abstract class User {
         this.role = role;
     }
 
-    public abstract boolean canManageUsers();
-
     public abstract String getDisplayRole();
 }

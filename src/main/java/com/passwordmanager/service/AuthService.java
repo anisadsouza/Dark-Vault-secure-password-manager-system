@@ -6,7 +6,6 @@ import com.passwordmanager.model.User;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;
-import java.util.List;
 import java.util.Optional;
 
 public class AuthService {
@@ -52,11 +51,6 @@ public class AuthService {
 
         return Optional.of(user);
     }
-
-    public List<User> getAllUsers() {
-        return userDAO.findAllUsers();
-    }
-
     private void validateRequired(String value, String fieldName) {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException(fieldName + " cannot be empty");

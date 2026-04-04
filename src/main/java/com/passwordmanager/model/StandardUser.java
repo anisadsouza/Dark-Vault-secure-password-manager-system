@@ -10,11 +10,6 @@ public class StandardUser extends User {
     }
 
     @Override
-    public boolean canManageUsers() {
-        return false;
-    }
-
-    @Override
     public String getDisplayRole() {
         return "Standard User";
     }

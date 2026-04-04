@@ -27,7 +27,10 @@
                 <label>Username</label>
                 <input name="username" type="text" placeholder="Enter username" required>
                 <label>Password</label>
-                <input name="password" type="password" placeholder="Enter password" required>
+                <div class="password-input-row">
+                    <input id="login-password" name="password" type="password" placeholder="Enter password" required>
+                    <button class="password-toggle-button" type="button" data-password-toggle data-target="login-password">Show</button>
+                </div>
                 <button type="submit" class="primary-button">Enter Vault</button>
             </form>
 
@@ -35,7 +38,10 @@
                 <label>Username</label>
                 <input name="username" type="text" placeholder="Create username" required>
                 <label>Password</label>
-                <input id="register-password" name="password" type="password" placeholder="At least 8 characters" required>
+                <div class="password-input-row">
+                    <input id="register-password" name="password" type="password" placeholder="At least 8 characters" required>
+                    <button class="password-toggle-button" type="button" data-password-toggle data-target="register-password">Show</button>
+                </div>
                 <div class="input-action-row">
                     <button id="register-generate-button" type="button" class="secondary-button inline-button">Generate Strong Password</button>
                 </div>
@@ -125,7 +131,10 @@
             <label>Account Username</label>
             <input id="site-username" name="siteUsername" type="text" placeholder="e.g. your-email@example.com" required>
             <label>Password</label>
-            <input id="site-password" name="password" type="password" placeholder="At least 8 chars, add uppercase, number, special" required>
+            <div class="password-input-row">
+                <input id="site-password" name="password" type="password" placeholder="At least 8 chars, add uppercase, number, special" required>
+                <button class="password-toggle-button" type="button" data-password-toggle data-target="site-password">Show</button>
+            </div>
             <div class="input-action-row">
                 <button id="credential-generate-button" type="button" class="secondary-button inline-button">Generate Strong Password</button>
             </div>

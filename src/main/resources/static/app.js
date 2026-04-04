@@ -49,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function bindEvents() {
+    bindPasswordToggleButtons();
     loginTab.addEventListener("click", () => switchTab("login"));
     registerTab.addEventListener("click", () => switchTab("register"));
     loginForm.addEventListener("submit", handleLogin);
@@ -532,6 +533,24 @@ function showCredentialFormMessage(message, isError) {
     credentialFormMessage.textContent = message;
     credentialFormMessage.classList.toggle("error", isError);
     credentialFormMessage.classList.toggle("success", Boolean(message) && !isError);
+}
+
+function bindPasswordToggleButtons() {
+    const toggleButtons = document.querySelectorAll("[data-password-toggle]");
+
+    for (const button of toggleButtons) {
+        button.addEventListener("click", () => {
+            const targetId = button.dataset.target;
+            const input = document.getElementById(targetId);
+            if (!input) {
+                return;
+            }
+
+            const shouldReveal = input.type === "password";
+            input.type = shouldReveal ? "text" : "password";
+            button.textContent = shouldReveal ? "Hide" : "Show";
+        });
+    }
 }
 
 function updateRegisterButtonState() {
