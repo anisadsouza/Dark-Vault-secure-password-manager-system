@@ -1,7 +1,6 @@
 package com.passwordmanager.service;
 
 import com.passwordmanager.dao.UserDAO;
-import com.passwordmanager.model.AdminUser;
 import com.passwordmanager.model.StandardUser;
 import com.passwordmanager.model.User;
 import java.nio.charset.StandardCharsets;
@@ -29,14 +28,8 @@ public class AuthService {
             throw new IllegalArgumentException("Username already exists. Please choose another username.");
         }
 
-        User user;
         String passwordHash = hashPassword(password);
-
-        if ("ADMIN".equalsIgnoreCase(role)) {
-            user = new AdminUser(0, username.trim(), passwordHash);
-        } else {
-            user = new StandardUser(0, username.trim(), passwordHash);
-        }
+        User user = new StandardUser(0, username.trim(), passwordHash);
 
         return userDAO.addUser(user);
     }

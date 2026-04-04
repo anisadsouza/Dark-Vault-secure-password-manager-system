@@ -200,6 +200,30 @@ body {
     font-family: Menlo, Monaco, Consolas, monospace;
 }
 
+.password-tips {
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(0, 180, 216, 0.16);
+    font-family: Menlo, Monaco, Consolas, monospace;
+}
+
+.password-tips p {
+    margin: 0 0 8px;
+    color: var(--accent-strong);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.password-tips ul {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--text-soft);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
 .auth-form input:focus,
 .auth-form select:focus,
 .auth-form textarea:focus {

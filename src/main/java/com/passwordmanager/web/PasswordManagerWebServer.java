@@ -81,7 +81,7 @@ public class PasswordManagerWebServer {
             boolean registered = authService.registerUser(
                     formData.getOrDefault("username", ""),
                     formData.getOrDefault("password", ""),
-                    formData.getOrDefault("role", "STANDARD")
+                    "STANDARD"
             );
 
             if (registered) {

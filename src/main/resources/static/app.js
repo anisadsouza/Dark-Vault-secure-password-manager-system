@@ -18,8 +18,6 @@ const summaryStrip = document.getElementById("summary-strip");
 const dashboardMessage = document.getElementById("dashboard-message");
 const statCredentials = document.getElementById("stat-credentials");
 const statSites = document.getElementById("stat-sites");
-const adminPanel = document.getElementById("admin-panel");
-const userList = document.getElementById("user-list");
 const credentialModal = document.getElementById("credential-modal");
 const closeModalButton = document.getElementById("close-modal-button");
 const credentialForm = document.getElementById("credential-form");
@@ -183,8 +181,7 @@ async function showDashboard(session) {
     welcomeRole.textContent = session.displayRole || "Secure session";
     await Promise.all([
         loadCredentials(),
-        loadSummary(),
-        loadUsers()
+        loadSummary()
     ]);
 }
 
@@ -224,25 +221,6 @@ async function loadSummary() {
     const response = await fetch("/api/summary");
     const result = await response.json();
     renderSummary(result.items || []);
-}
-
-async function loadUsers() {
-    if (!currentSession?.canManageUsers) {
-        adminPanel.classList.add("hidden");
-        userList.innerHTML = "";
-        return;
-    }
-
-    const response = await fetch("/api/users");
-    const result = await response.json();
-    const users = result.items || [];
-    adminPanel.classList.remove("hidden");
-    userList.innerHTML = users.map(user => `
-        <div class="user-row">
-            <strong>${escapeHtml(user.username)}</strong>
-            <div>${escapeHtml(user.displayRole)}</div>
-        </div>
-    `).join("");
 }
 
 function renderCredentialGrid(credentials) {
@@ -475,7 +453,7 @@ function validateCredentialInput(siteName, siteUsername, password) {
 }
 
 function validatePassword(password) {
-    if (password.length < 8) {
+    if (password.length < 6) {
         return "Password too short";
     }
 
@@ -484,7 +462,7 @@ function validatePassword(password) {
 
 function getPasswordChecks(password) {
     return {
-        length: password.length >= 8,
+        length: password.length >= 6,
         uppercase: /[A-Z]/.test(password),
         number: /[0-9]/.test(password),
         special: /[^A-Za-z0-9]/.test(password)
