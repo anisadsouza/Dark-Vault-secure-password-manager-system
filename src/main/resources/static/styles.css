@@ -313,44 +313,68 @@ body {
     font-size: 1rem;
 }
 
+.credential-table-header {
+    display: grid;
+    grid-template-columns: 1.05fr 1.15fr 0.85fr 0.95fr;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 18px;
+    background: rgba(0, 180, 216, 0.1);
+    border: 1px solid rgba(0, 180, 216, 0.18);
+    color: var(--accent-strong);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: Menlo, Monaco, Consolas, monospace;
+}
+
 .credential-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 18px;
+    gap: 12px;
 }
 
 .credential-card {
-    padding: 20px;
-    border-radius: 22px;
+    display: grid;
+    grid-template-columns: 1.05fr 1.15fr 0.85fr 0.95fr;
+    gap: 14px;
+    align-items: center;
+    padding: 18px;
+    border-radius: 18px;
     border: 1px solid var(--border);
     background: rgba(15, 21, 44, 0.82);
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
 }
 
 .credential-card h4 {
-    margin: 0 0 8px;
-    font-size: 1.25rem;
+    margin: 0;
+    font-size: 1rem;
+    color: #e0f4f8;
+    font-family: Menlo, Monaco, Consolas, monospace;
 }
 
 .credential-card p {
-    margin: 8px 0;
+    margin: 0;
     color: var(--text-soft);
+    font-size: 0.95rem;
 }
 
 .password-line {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 14px;
+    justify-content: flex-start;
+    gap: 10px;
     font-family: Menlo, Monaco, Consolas, monospace;
     color: var(--accent-strong);
 }
 
+.password-value {
+    min-width: 100px;
+}
+
 .card-actions {
+    justify-content: flex-end;
     display: flex;
     gap: 10px;
-    margin-top: 18px;
 }
 
 .card-actions button,
@@ -362,6 +386,15 @@ body {
     background: rgba(255, 255, 255, 0.08);
     color: var(--text-main);
     font-family: Menlo, Monaco, Consolas, monospace;
+}
+
+.eye-button {
+    min-width: 44px;
+    padding: 10px 10px;
+}
+
+.field-error {
+    color: var(--danger);
 }
 
 .summary-strip {
@@ -456,5 +489,19 @@ body {
 
     .toolbar-panel {
         grid-template-columns: 1fr;
+    }
+
+    .credential-table-header {
+        display: none;
+    }
+
+    .credential-card {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .card-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
     }
 }

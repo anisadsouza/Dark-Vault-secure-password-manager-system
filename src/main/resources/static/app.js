@@ -29,6 +29,7 @@ const siteNameInput = document.getElementById("site-name");
 const siteUsernameInput = document.getElementById("site-username");
 const sitePasswordInput = document.getElementById("site-password");
 const siteNotesInput = document.getElementById("site-notes");
+const credentialFormMessage = document.getElementById("credential-form-message");
 const registerStrength = document.getElementById("register-strength");
 const registerStrengthFill = document.getElementById("register-strength-fill");
 const registerStrengthText = document.getElementById("register-strength-text");
@@ -77,6 +78,15 @@ function bindEvents() {
 
 async function handleLogin(event) {
     event.preventDefault();
+    const username = loginForm.username.value.trim();
+    const password = loginForm.password.value;
+
+    const loginValidationError = validateAuthInput(username, password, false);
+    if (loginValidationError) {
+        showAuthMessage(loginValidationError, true);
+        return;
+    }
+
     const formData = new FormData(loginForm);
     const body = new URLSearchParams(formData);
 
@@ -105,6 +115,15 @@ async function handleLogin(event) {
 
 async function handleRegister(event) {
     event.preventDefault();
+    const username = registerForm.username.value.trim();
+    const password = registerForm.password.value;
+
+    const registerValidationError = validateAuthInput(username, password, true);
+    if (registerValidationError) {
+        showAuthMessage(registerValidationError, true);
+        return;
+    }
+
     const formData = new FormData(registerForm);
     const body = new URLSearchParams(formData);
 
@@ -240,12 +259,14 @@ function renderCredentialGrid(credentials) {
 
     credentialGrid.innerHTML = credentials.map(credential => `
         <article class="credential-card">
-            <p class="eyebrow">${escapeHtml(credential.siteName)}</p>
+            <div>
+                <p class="eyebrow">${escapeHtml(credential.siteName)}</p>
+                <p>${escapeHtml(credential.notes || "No notes added.")}</p>
+            </div>
             <h4>${escapeHtml(credential.siteUsername)}</h4>
-            <p>${escapeHtml(credential.notes || "No notes added.")}</p>
             <div class="password-line">
-                <span id="password-${credential.credentialId}" data-password="${escapeHtml(credential.password)}">${maskPassword(credential.password)}</span>
-                <button class="icon-button" type="button" onclick="togglePassword(${credential.credentialId})">Unlock</button>
+                <span class="password-value" id="password-${credential.credentialId}" data-password="${escapeHtml(credential.password)}">${maskPassword(credential.password)}</span>
+                <button class="icon-button eye-button" type="button" onclick="togglePassword(${credential.credentialId})" title="Show or hide password">👁</button>
             </div>
             <div class="card-actions">
                 <button type="button" onclick="copyPassword(${credential.credentialId})">Copy</button>
@@ -280,6 +301,7 @@ function openCredentialModal(credential = null) {
     siteUsernameInput.value = credential?.siteUsername || "";
     sitePasswordInput.value = credential?.password || "";
     siteNotesInput.value = credential?.notes || "";
+    showCredentialFormMessage("", false);
     updateStrengthMeter(sitePasswordInput.value, credentialStrength, credentialStrengthFill, credentialStrengthText);
     credentialModal.classList.remove("hidden");
 }
@@ -290,6 +312,17 @@ function closeCredentialModal() {
 
 async function handleCredentialSave(event) {
     event.preventDefault();
+    const validationError = validateCredentialInput(
+        siteNameInput.value.trim(),
+        siteUsernameInput.value.trim(),
+        sitePasswordInput.value
+    );
+
+    if (validationError) {
+        showCredentialFormMessage(validationError, true);
+        return;
+    }
+
     const formData = new FormData(credentialForm);
     const body = new URLSearchParams(formData);
     const isEdit = Boolean(credentialIdInput.value);
@@ -304,7 +337,7 @@ async function handleCredentialSave(event) {
 
     const result = await response.json();
     if (!response.ok) {
-        showDashboardMessage(result.error || "Unable to save credential.", true);
+        showCredentialFormMessage(result.error || "Invalid input", true);
         return;
     }
 
@@ -395,25 +428,77 @@ function updateStrengthMeter(password, wrapper, fill, text) {
 
     wrapper.classList.remove("hidden");
 
-    let score = 0;
-    if (password.length >= 6) score += 1;
-    if (password.length >= 10) score += 1;
-    if (/[A-Z]/.test(password)) score += 1;
-    if (/[0-9]/.test(password)) score += 1;
-    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+    const checks = getPasswordChecks(password);
+    const passedChecks = Object.values(checks).filter(Boolean).length;
 
-    const strengthMap = [
-        { width: "20%", label: "Very Weak", color: "#ff6b6b" },
-        { width: "40%", label: "Weak", color: "#ff9f43" },
-        { width: "60%", label: "Fair", color: "#ffd166" },
-        { width: "80%", label: "Strong", color: "#06d6a0" },
-        { width: "100%", label: "Very Strong", color: "#00f5d4" }
-    ];
+    let config = { width: "34%", label: "Weak", color: "#ff6b6b" };
+    if (passedChecks >= 4) {
+        config = { width: "100%", label: "Strong", color: "#00f5d4" };
+    } else if (passedChecks >= 2) {
+        config = { width: "67%", label: "Medium", color: "#ffd166" };
+    }
 
-    const config = strengthMap[Math.max(score - 1, 0)];
     fill.style.width = config.width;
     fill.style.background = config.color;
     text.textContent = `Password Strength: ${config.label}`;
+}
+
+function validateAuthInput(username, password, requireStrongPassword) {
+    if (!username || !password) {
+        return "Field cannot be empty";
+    }
+
+    if (!isValidInput(username)) {
+        return "Invalid input";
+    }
+
+    if (requireStrongPassword) {
+        const passwordValidationMessage = validatePassword(password);
+        if (passwordValidationMessage) {
+            return passwordValidationMessage;
+        }
+    }
+
+    return "";
+}
+
+function validateCredentialInput(siteName, siteUsername, password) {
+    if (!siteName || !siteUsername || !password) {
+        return "Field cannot be empty";
+    }
+
+    if (!isValidInput(siteName) || !isValidInput(siteUsername)) {
+        return "Invalid input";
+    }
+
+    return validatePassword(password);
+}
+
+function validatePassword(password) {
+    if (password.length < 8) {
+        return "Password too short";
+    }
+
+    return "";
+}
+
+function getPasswordChecks(password) {
+    return {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[^A-Za-z0-9]/.test(password)
+    };
+}
+
+function isValidInput(value) {
+    return !/[<>]/.test(value);
+}
+
+function showCredentialFormMessage(message, isError) {
+    credentialFormMessage.textContent = message;
+    credentialFormMessage.classList.toggle("error", isError);
+    credentialFormMessage.classList.toggle("success", Boolean(message) && !isError);
 }
 
 function escapeHtml(value) {
