@@ -4,3 +4,4 @@ target/
 *.log
 password_manager.db
 .DS_Store
+docs/project-report-template.md
