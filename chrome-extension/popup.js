@@ -1,5 +1,27 @@
-const STORAGE_KEY = "darkVaultCredentials";
+const ACCOUNT_KEY = "darkVaultExtensionAccount";
+const SESSION_KEY = "darkVaultExtensionSession";
+const CREDENTIALS_PREFIX = "darkVaultCredentials:";
 
+const authView = document.getElementById("auth-view");
+const appView = document.getElementById("app-view");
+const loginTab = document.getElementById("login-tab");
+const registerTab = document.getElementById("register-tab");
+const loginForm = document.getElementById("login-form");
+const registerForm = document.getElementById("register-form");
+const loginUsernameInput = document.getElementById("login-username");
+const loginPasswordInput = document.getElementById("login-password");
+const registerUsernameInput = document.getElementById("register-username");
+const registerPasswordInput = document.getElementById("register-password");
+const registerConfirmPasswordInput = document.getElementById("register-confirm-password");
+const toggleLoginPasswordButton = document.getElementById("toggle-login-password");
+const toggleRegisterPasswordButton = document.getElementById("toggle-register-password");
+const toggleConfirmPasswordButton = document.getElementById("toggle-confirm-password");
+const authMessage = document.getElementById("auth-message");
+const registerStrengthMeter = document.getElementById("register-strength-meter");
+const registerStrengthFill = document.getElementById("register-strength-fill");
+const registerStrengthText = document.getElementById("register-strength-text");
+const logoutButton = document.getElementById("logout-button");
+const welcomeText = document.getElementById("welcome-text");
 const credentialForm = document.getElementById("credential-form");
 const siteNameInput = document.getElementById("site-name");
 const siteUsernameInput = document.getElementById("site-username");
@@ -18,30 +40,178 @@ const strengthMeter = document.getElementById("strength-meter");
 const strengthFill = document.getElementById("strength-fill");
 const strengthText = document.getElementById("strength-text");
 
+let currentUser = null;
 let allCredentials = [];
 let visiblePasswords = new Set();
 
 document.addEventListener("DOMContentLoaded", async () => {
     bindEvents();
-    await loadCredentials();
-    updateSaveButtonState();
+    await initializeExtension();
 });
 
 function bindEvents() {
+    loginTab.addEventListener("click", () => switchAuthTab("login"));
+    registerTab.addEventListener("click", () => switchAuthTab("register"));
+    loginForm.addEventListener("submit", handleLogin);
+    registerForm.addEventListener("submit", handleRegister);
+    logoutButton.addEventListener("click", handleLogout);
+    registerPasswordInput.addEventListener("input", () => updateStrengthMeter(registerPasswordInput.value, registerStrengthMeter, registerStrengthFill, registerStrengthText));
     credentialForm.addEventListener("submit", handleSaveCredential);
     siteNameInput.addEventListener("input", updateSaveButtonState);
     siteUsernameInput.addEventListener("input", updateSaveButtonState);
     sitePasswordInput.addEventListener("input", () => {
         updateSaveButtonState();
-        updateStrengthMeter(sitePasswordInput.value);
+        updateStrengthMeter(sitePasswordInput.value, strengthMeter, strengthFill, strengthText);
     });
     generateButton.addEventListener("click", handleGeneratePassword);
-    togglePasswordButton.addEventListener("click", toggleFormPassword);
+    togglePasswordButton.addEventListener("click", () => togglePasswordInput(sitePasswordInput, togglePasswordButton));
+    toggleLoginPasswordButton.addEventListener("click", () => togglePasswordInput(loginPasswordInput, toggleLoginPasswordButton));
+    toggleRegisterPasswordButton.addEventListener("click", () => togglePasswordInput(registerPasswordInput, toggleRegisterPasswordButton));
+    toggleConfirmPasswordButton.addEventListener("click", () => togglePasswordInput(registerConfirmPasswordInput, toggleConfirmPasswordButton));
     searchInput.addEventListener("input", renderCredentials);
     clearButton.addEventListener("click", () => {
         searchInput.value = "";
         renderCredentials();
     });
+}
+
+async function initializeExtension() {
+    const account = await getStoredAccount();
+    const session = await getStoredSession();
+
+    if (account && session?.authenticated && session.username === account.username) {
+        currentUser = account.username;
+        welcomeText.textContent = `Welcome back, ${currentUser}.`;
+        showAppView();
+        await loadCredentials();
+        updateSaveButtonState();
+        return;
+    }
+
+    showAuthView(account ? "login" : "register");
+}
+
+function switchAuthTab(tabName) {
+    const showLogin = tabName === "login";
+    loginTab.classList.toggle("active", showLogin);
+    registerTab.classList.toggle("active", !showLogin);
+    loginForm.classList.toggle("hidden", !showLogin);
+    registerForm.classList.toggle("hidden", showLogin);
+    showAuthMessage("", false);
+}
+
+async function handleRegister(event) {
+    event.preventDefault();
+
+    const username = registerUsernameInput.value.trim();
+    const password = registerPasswordInput.value;
+    const confirmPassword = registerConfirmPasswordInput.value;
+    const existingAccount = await getStoredAccount();
+
+    if (existingAccount) {
+        showAuthMessage("An extension account already exists. Please log in.", true);
+        switchAuthTab("login");
+        return;
+    }
+
+    const validationError = validateAuthInput(username, password, true);
+    if (validationError) {
+        showAuthMessage(validationError, true);
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showAuthMessage("Passwords do not match", true);
+        return;
+    }
+
+    const account = {
+        username,
+        passwordHash: await hashValue(password)
+    };
+
+    await chrome.storage.local.set({ [ACCOUNT_KEY]: account });
+    await chrome.storage.session.set({
+        [SESSION_KEY]: {
+            authenticated: true,
+            username
+        }
+    });
+
+    currentUser = username;
+    registerForm.reset();
+    updateStrengthMeter("", registerStrengthMeter, registerStrengthFill, registerStrengthText);
+    welcomeText.textContent = `Welcome back, ${currentUser}.`;
+    showAuthMessage("Account created successfully.", false);
+    showAppView();
+    await loadCredentials();
+    updateSaveButtonState();
+}
+
+async function handleLogin(event) {
+    event.preventDefault();
+
+    const username = loginUsernameInput.value.trim();
+    const password = loginPasswordInput.value;
+    const validationError = validateAuthInput(username, password, false);
+    if (validationError) {
+        showAuthMessage(validationError, true);
+        return;
+    }
+
+    const account = await getStoredAccount();
+    if (!account) {
+        showAuthMessage("No account found. Please register first.", true);
+        switchAuthTab("register");
+        return;
+    }
+
+    const passwordHash = await hashValue(password);
+    if (account.username !== username || account.passwordHash !== passwordHash) {
+        showAuthMessage("Invalid username or password", true);
+        return;
+    }
+
+    await chrome.storage.session.set({
+        [SESSION_KEY]: {
+            authenticated: true,
+            username
+        }
+    });
+
+    currentUser = username;
+    loginForm.reset();
+    welcomeText.textContent = `Welcome back, ${currentUser}.`;
+    showAppView();
+    await loadCredentials();
+    updateSaveButtonState();
+}
+
+async function handleLogout() {
+    await chrome.storage.session.remove(SESSION_KEY);
+    currentUser = null;
+    allCredentials = [];
+    visiblePasswords = new Set();
+    credentialList.innerHTML = "";
+    searchInput.value = "";
+    loginForm.reset();
+    registerForm.reset();
+    credentialForm.reset();
+    updateStrengthMeter("", registerStrengthMeter, registerStrengthFill, registerStrengthText);
+    updateStrengthMeter("", strengthMeter, strengthFill, strengthText);
+    showAuthView("login");
+}
+
+function showAuthView(defaultTab) {
+    authView.classList.remove("hidden");
+    appView.classList.add("hidden");
+    switchAuthTab(defaultTab);
+}
+
+function showAppView() {
+    authView.classList.add("hidden");
+    appView.classList.remove("hidden");
+    showAuthMessage("", false);
 }
 
 async function handleSaveCredential(event) {
@@ -51,7 +221,6 @@ async function handleSaveCredential(event) {
     const siteUsername = siteUsernameInput.value.trim();
     const password = sitePasswordInput.value;
     const notes = siteNotesInput.value.trim();
-
     const validationError = validateCredential(siteName, siteUsername, password);
     if (validationError) {
         showFormMessage(validationError, true);
@@ -70,7 +239,7 @@ async function handleSaveCredential(event) {
     allCredentials.unshift(credential);
     await saveCredentials();
     credentialForm.reset();
-    updateStrengthMeter("");
+    updateStrengthMeter("", strengthMeter, strengthFill, strengthText);
     updateSaveButtonState();
     togglePasswordButton.textContent = "Show";
     sitePasswordInput.type = "password";
@@ -83,19 +252,42 @@ function handleGeneratePassword() {
     sitePasswordInput.value = generateStrongPassword();
     sitePasswordInput.type = "text";
     togglePasswordButton.textContent = "Hide";
-    updateStrengthMeter(sitePasswordInput.value);
+    updateStrengthMeter(sitePasswordInput.value, strengthMeter, strengthFill, strengthText);
     updateSaveButtonState();
     showFormMessage("Strong password generated.", false);
 }
 
-function toggleFormPassword() {
-    const shouldReveal = sitePasswordInput.type === "password";
-    sitePasswordInput.type = shouldReveal ? "text" : "password";
-    togglePasswordButton.textContent = shouldReveal ? "Hide" : "Show";
+function togglePasswordInput(input, button) {
+    const shouldReveal = input.type === "password";
+    input.type = shouldReveal ? "text" : "password";
+    button.textContent = shouldReveal ? "Hide" : "Show";
 }
 
 function updateSaveButtonState() {
     saveButton.disabled = !siteNameInput.value.trim() || !siteUsernameInput.value.trim() || !sitePasswordInput.value;
+}
+
+function validateAuthInput(username, password, requireStrongPassword) {
+    if (!username) {
+        return "Username cannot be empty";
+    }
+
+    if (!password) {
+        return "Password cannot be empty";
+    }
+
+    if (!isValidInput(username)) {
+        return "Invalid input";
+    }
+
+    if (requireStrongPassword) {
+        const passwordValidation = validatePassword(password);
+        if (passwordValidation) {
+            return passwordValidation;
+        }
+    }
+
+    return "";
 }
 
 function validateCredential(siteName, siteUsername, password) {
@@ -111,10 +303,14 @@ function validateCredential(siteName, siteUsername, password) {
         return "Password cannot be empty";
     }
 
-    if (/[<>]/.test(siteName) || /[<>]/.test(siteUsername)) {
+    if (!isValidInput(siteName) || !isValidInput(siteUsername)) {
         return "Invalid input";
     }
 
+    return validatePassword(password);
+}
+
+function validatePassword(password) {
     if (password.length < 8) {
         return "Password must be at least 8 characters";
     }
@@ -122,15 +318,15 @@ function validateCredential(siteName, siteUsername, password) {
     return "";
 }
 
-function updateStrengthMeter(password) {
+function updateStrengthMeter(password, wrapper, fill, text) {
     if (!password) {
-        strengthMeter.classList.add("hidden");
-        strengthFill.style.width = "0%";
-        strengthText.textContent = "";
+        wrapper.classList.add("hidden");
+        fill.style.width = "0%";
+        text.textContent = "";
         return;
     }
 
-    strengthMeter.classList.remove("hidden");
+    wrapper.classList.remove("hidden");
     const checks = getPasswordChecks(password);
     const passedChecks = Object.values(checks).filter(Boolean).length;
 
@@ -141,9 +337,9 @@ function updateStrengthMeter(password) {
         state = { width: "67%", color: "#ffd166", label: "Medium" };
     }
 
-    strengthFill.style.width = state.width;
-    strengthFill.style.background = state.color;
-    strengthText.textContent = `Password Strength: ${state.label}`;
+    fill.style.width = state.width;
+    fill.style.background = state.color;
+    text.textContent = `Password Strength: ${state.label}`;
 }
 
 function getPasswordChecks(password) {
@@ -193,14 +389,28 @@ function shuffle(characters) {
     return copy;
 }
 
+async function getStoredAccount() {
+    const result = await chrome.storage.local.get([ACCOUNT_KEY]);
+    return result[ACCOUNT_KEY] || null;
+}
+
+async function getStoredSession() {
+    const result = await chrome.storage.session.get([SESSION_KEY]);
+    return result[SESSION_KEY] || null;
+}
+
+function currentCredentialsKey() {
+    return `${CREDENTIALS_PREFIX}${currentUser || "guest"}`;
+}
+
 async function loadCredentials() {
-    const result = await chrome.storage.local.get([STORAGE_KEY]);
-    allCredentials = Array.isArray(result[STORAGE_KEY]) ? result[STORAGE_KEY] : [];
+    const result = await chrome.storage.local.get([currentCredentialsKey()]);
+    allCredentials = Array.isArray(result[currentCredentialsKey()]) ? result[currentCredentialsKey()] : [];
     renderCredentials();
 }
 
 async function saveCredentials() {
-    await chrome.storage.local.set({ [STORAGE_KEY]: allCredentials });
+    await chrome.storage.local.set({ [currentCredentialsKey()]: allCredentials });
 }
 
 function renderCredentials() {
@@ -308,6 +518,12 @@ function maskPassword(password) {
     return "*".repeat(Math.max(8, (password || "").length));
 }
 
+function showAuthMessage(message, isError) {
+    authMessage.textContent = message;
+    authMessage.classList.toggle("error", isError);
+    authMessage.classList.toggle("success", Boolean(message) && !isError);
+}
+
 function showFormMessage(message, isError) {
     formMessage.textContent = message;
     formMessage.classList.toggle("error", isError);
@@ -318,6 +534,18 @@ function showVaultMessage(message, isError) {
     vaultMessage.textContent = message;
     vaultMessage.classList.toggle("error", isError);
     vaultMessage.classList.toggle("success", Boolean(message) && !isError);
+}
+
+async function hashValue(value) {
+    const data = new TextEncoder().encode(value);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(hashBuffer))
+        .map(byte => byte.toString(16).padStart(2, "0"))
+        .join("");
+}
+
+function isValidInput(value) {
+    return !/[<>]/.test(value);
 }
 
 function escapeHtml(value) {

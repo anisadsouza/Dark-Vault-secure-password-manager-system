@@ -46,6 +46,11 @@ body {
     padding: 16px;
 }
 
+.view {
+    display: grid;
+    gap: 16px;
+}
+
 .panel,
 .hero-card {
     border-radius: 24px;
@@ -97,10 +102,39 @@ body {
     margin-bottom: 14px;
 }
 
+.hero-head {
+    align-items: flex-start;
+    margin-bottom: 0;
+}
+
 .section-head h2 {
     margin: 0;
     font-size: 1rem;
     font-family: Menlo, Monaco, Consolas, monospace;
+}
+
+.auth-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.tab-button {
+    border: none;
+    cursor: pointer;
+    border-radius: 999px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-main);
+    font-family: Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tab-button.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    color: #06131d;
+    box-shadow: 0 0 18px rgba(0, 245, 212, 0.24);
 }
 
 .count-pill {
@@ -237,7 +271,8 @@ textarea:focus {
 }
 
 .primary-button:hover,
-.ghost-button:hover {
+.ghost-button:hover,
+.tab-button:hover {
     transform: translateY(-1px);
 }
 
