@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Vault</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<div class="background-grid"></div>
+
+<main class="popup-shell">
+    <header class="hero-card">
+        <p class="brand">DARK VAULT</p>
+        <h1>Secure Password Manager</h1>
+        <p class="sub">Chrome extension vault with local storage and a cyber-themed Dark Vault interface.</p>
+    </header>
+
+    <section class="panel form-panel">
+        <div class="section-head">
+            <h2>Add Credential</h2>
+            <button id="generate-button" type="button" class="ghost-button">Generate</button>
+        </div>
+
+        <form id="credential-form" class="credential-form">
+            <label for="site-name">Site Name</label>
+            <input id="site-name" name="siteName" type="text" placeholder="e.g. GitHub" required>
+
+            <label for="site-username">Username / Email</label>
+            <input id="site-username" name="siteUsername" type="text" placeholder="e.g. student@example.com" required>
+
+            <label for="site-password">Password</label>
+            <div class="password-row">
+                <input id="site-password" name="password" type="password" placeholder="Enter a strong password" required>
+                <button id="toggle-password-button" type="button" class="ghost-button compact-button">Show</button>
+            </div>
+
+            <div id="strength-meter" class="strength-meter hidden">
+                <div class="strength-bar"><span id="strength-fill"></span></div>
+                <p id="strength-text" class="strength-text"></p>
+            </div>
+
+            <div class="tips-card">
+                <p>Password Tips</p>
+                <ul>
+                    <li>Use at least 8 characters</li>
+                    <li>Add uppercase letters</li>
+                    <li>Add numbers</li>
+                    <li>Add special characters</li>
+                </ul>
+            </div>
+
+            <label for="site-notes">Notes</label>
+            <textarea id="site-notes" name="notes" rows="3" placeholder="Optional notes"></textarea>
+
+            <p id="form-message" class="status-text"></p>
+            <button id="save-button" type="submit" class="primary-button">Save Credential</button>
+        </form>
+    </section>
+
+    <section class="panel vault-panel">
+        <div class="section-head">
+            <h2>Your Vault</h2>
+            <span id="credential-count" class="count-pill">0 items</span>
+        </div>
+
+        <div class="toolbar">
+            <input id="search-input" type="text" placeholder="Search by site or username">
+            <button id="clear-button" type="button" class="ghost-button compact-button">Clear</button>
+        </div>
+
+        <p id="vault-message" class="status-text"></p>
+        <div id="credential-list" class="credential-list"></div>
+    </section>
+</main>
+
+<script src="popup.js"></script>
+</body>
+</html>
