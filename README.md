@@ -1,12 +1,12 @@
-# Dark Vault: Secure Password Manager System
+# Dark Vault: Secure Digital Vault System
 
-A browser-based Java application for securely storing and managing website credentials using JDBC and a relational database.
+A browser-based Java application for securely storing and managing website credentials and file records using JDBC and a relational database.
 
 This project was developed as a real-world Object-Oriented Programming and Database Connectivity assignment. It demonstrates software engineering practices, layered architecture, modular programming, CRUD operations, input validation, and data persistence in Java.
 
 ## Project Overview
 
-Dark Vault is a secure password manager built with Java, SQLite, JDBC, HTML, CSS, and JavaScript. It allows users to register, log in, and manage website credentials through a cyber-themed browser interface.
+Dark Vault is a secure digital vault built with Java, SQLite, JDBC, HTML, CSS, and JavaScript. It allows users to register, log in, manage website credentials, and store secure document/file records through a cyber-themed browser interface.
 
 The system supports:
 
@@ -16,6 +16,8 @@ The system supports:
 - password generation
 - password masking and reveal
 - encrypted password storage
+- secure document/file storage foundation
+- downloadable stored files through the Java web server
 - site summary statistics
 
 ## Assignment Alignment
@@ -27,7 +29,7 @@ This project satisfies the major assignment requirements:
 - `Database Connectivity`: JDBC
 - `Architecture`: Presentation Layer, Business Logic Layer, DAO Layer, Database Layer
 - `Core OOP Concepts`: classes, objects, encapsulation, inheritance, polymorphism, abstraction
-- `CRUD Operations`: fully implemented for credential management
+- `CRUD Operations`: implemented for credential management and document/file records
 - `Validation and Exception Handling`: included across UI, service, and DAO layers
 
 ## Technology Stack
@@ -41,6 +43,7 @@ This project satisfies the major assignment requirements:
 | Backend | Java built-in `HttpServer` |
 | Frontend | HTML, CSS, JavaScript |
 | Encryption | AES for credential encryption, SHA-256 for password hashing |
+| File Storage | Local `vault-files/` folder with metadata in SQLite |
 
 ## Features
 
@@ -56,6 +59,14 @@ This project satisfies the major assignment requirements:
 - Search credentials by site name or username
 - Edit existing credential
 - Delete credential
+
+### Secure Document Vault
+
+- Save file metadata in SQLite
+- Store actual uploaded files in a local `vault-files/` folder
+- Search document records by title, file name, or category
+- Delete document records and stored files
+- Download stored files through the Java web server
 
 ### Security and Usability Features
 
@@ -91,6 +102,7 @@ Responsible for application rules and processing.
 
 - `AuthService`
 - `CredentialService`
+- `DocumentService`
 - `AESEncryptionService`
 
 ### 3. Data Access Layer
@@ -99,14 +111,17 @@ Responsible for database interaction using JDBC.
 
 - `UserDAO`
 - `CredentialDAO`
+- `DocumentDAO`
 - `UserDAOImpl`
 - `CredentialDAOImpl`
+- `DocumentDAOImpl`
 
 ### 4. Database Layer
 
 Responsible for tables and persistent data.
 
 - SQLite database file created at runtime
+- Uploaded files stored locally in `vault-files/`
 - SQL scripts in `database/`
 
 ## OOP Concepts Demonstrated
@@ -118,10 +133,13 @@ The project uses multiple classes such as:
 - `User`
 - `StandardUser`
 - `Credential`
+- `SecureDocument`
 - `AuthService`
 - `CredentialService`
+- `DocumentService`
 - `UserDAOImpl`
 - `CredentialDAOImpl`
+- `DocumentDAOImpl`
 - `PasswordManagerWebServer`
 
 ### Encapsulation
@@ -132,6 +150,7 @@ Examples:
 
 - `User`
 - `Credential`
+- `SecureDocument`
 
 ### Inheritance
 
@@ -171,7 +190,7 @@ Examples:
 
 ## Database Design
 
-The project uses a relational SQLite database with two main tables.
+The project uses a relational SQLite database with three main tables.
 
 ### `users`
 
@@ -193,10 +212,27 @@ The project uses a relational SQLite database with two main tables.
 | `encrypted_password` | TEXT | AES-encrypted password |
 | `notes` | TEXT | Optional notes |
 
+### `secure_documents`
+
+| Column | Type | Description |
+| --- | --- | --- |
+| `document_id` | INTEGER | Primary key |
+| `user_id` | INTEGER | Foreign key referencing `users.user_id` |
+| `title` | TEXT | Display title for the document |
+| `original_file_name` | TEXT | Original uploaded file name |
+| `stored_file_path` | TEXT | Path to file stored in `vault-files/` |
+| `mime_type` | TEXT | File type such as PDF, image, CSV, or Word |
+| `category` | TEXT | Document category |
+| `notes` | TEXT | Optional notes |
+| `file_size_bytes` | INTEGER | Stored file size |
+| `date_added` | TEXT | Upload timestamp |
+
 ### Relationship
 
 - One user can have many credentials
+- One user can have many secure documents
 - `credentials.user_id` references `users.user_id`
+- `secure_documents.user_id` references `users.user_id`
 
 ## Project Structure
 
@@ -237,9 +273,11 @@ PasswordManager/
 | `Credential.java` | Credential model |
 | `AuthService.java` | Registration and login logic |
 | `CredentialService.java` | Credential business logic |
+| `DocumentService.java` | Secure document/file storage logic |
 | `AESEncryptionService.java` | Encrypts and decrypts credential passwords |
 | `UserDAOImpl.java` | JDBC operations for users |
 | `CredentialDAOImpl.java` | JDBC operations for credentials |
+| `DocumentDAOImpl.java` | JDBC operations for document records |
 | `PasswordManagerWebServer.java` | Local web server and API routing |
 
 ## Frontend Interface
@@ -259,6 +297,8 @@ The interface includes:
 - password reveal buttons
 - password strength meter
 - vault summary section
+
+The backend also includes secure document/file APIs. Uploaded files are copied to `vault-files/`, while file metadata is stored in SQLite.
 
 ## How to Run the Project
 
@@ -285,6 +325,14 @@ The project includes:
 - `database/sample-data.sql` for sample records
 
 The runtime database file is created automatically when the application starts.
+
+Uploaded files are stored in:
+
+```text
+vault-files/
+```
+
+This folder is ignored by Git because it contains user-uploaded local files.
 
 ## Validation and Exception Handling
 

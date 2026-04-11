@@ -1,11 +1,14 @@
 package com.passwordmanager.web;
 
+import com.passwordmanager.model.SecureDocument;
 import com.passwordmanager.model.User;
 import com.passwordmanager.service.AuthService;
 import com.passwordmanager.service.CredentialService;
+import com.passwordmanager.service.DocumentService;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.List;
@@ -17,12 +20,14 @@ public class PasswordManagerWebServer {
     private static final String SESSION_COOKIE = "PM_SESSION";
     private final AuthService authService;
     private final CredentialService credentialService;
+    private final DocumentService documentService;
     private final SessionManager sessionManager;
     private HttpServer server;
 
-    public PasswordManagerWebServer(AuthService authService, CredentialService credentialService) {
+    public PasswordManagerWebServer(AuthService authService, CredentialService credentialService, DocumentService documentService) {
         this.authService = authService;
         this.credentialService = credentialService;
+        this.documentService = documentService;
         this.sessionManager = new SessionManager();
     }
 
@@ -38,6 +43,8 @@ public class PasswordManagerWebServer {
             server.createContext("/api/session", this::handleSession);
             server.createContext("/api/credentials", this::handleCredentials);
             server.createContext("/api/summary", this::handleSummary);
+            server.createContext("/api/documents", this::handleDocuments);
+            server.createContext("/api/documents/download", this::handleDocumentDownload);
             server.createContext("/api/health", this::handleHealth);
             server.setExecutor(Executors.newCachedThreadPool());
             server.start();
@@ -239,6 +246,93 @@ public class PasswordManagerWebServer {
         }
     }
 
+    private void handleDocuments(HttpExchange exchange) throws IOException {
+        Optional<User> userOptional = currentUser(exchange);
+        if (userOptional.isEmpty()) {
+            WebUtils.sendJson(exchange, 401, "{\"success\":false,\"error\":\"Please log in first.\"}");
+            return;
+        }
+
+        User user = userOptional.get();
+        String method = exchange.getRequestMethod();
+
+        try {
+            if ("GET".equalsIgnoreCase(method)) {
+                String search = queryValue(exchange.getRequestURI(), "search");
+                List<SecureDocument> documents = search.isBlank()
+                        ? documentService.getDocumentsForUser(user.getUserId())
+                        : documentService.searchDocuments(user.getUserId(), search);
+                WebUtils.sendJson(exchange, 200, buildDocumentsJson(documents));
+                return;
+            }
+
+            if ("POST".equalsIgnoreCase(method)) {
+                Map<String, String> formData = WebUtils.parseFormData(WebUtils.readBody(exchange));
+                boolean saved = documentService.saveDocument(
+                        user.getUserId(),
+                        formData.getOrDefault("title", ""),
+                        formData.getOrDefault("fileName", ""),
+                        formData.getOrDefault("mimeType", ""),
+                        formData.getOrDefault("category", ""),
+                        formData.getOrDefault("notes", ""),
+                        formData.getOrDefault("fileData", "")
+                );
+                WebUtils.sendJson(exchange, saved ? 200 : 400, "{\"success\":" + saved + "}");
+                return;
+            }
+
+            if ("DELETE".equalsIgnoreCase(method)) {
+                String documentIdValue = queryValue(exchange.getRequestURI(), "id");
+                boolean deleted = documentService.deleteDocument(Integer.parseInt(documentIdValue), user.getUserId());
+                WebUtils.sendJson(exchange, deleted ? 200 : 400, "{\"success\":" + deleted + "}");
+                return;
+            }
+
+            WebUtils.sendJson(exchange, 405, "{\"error\":\"Method not allowed.\"}");
+        } catch (IllegalArgumentException exception) {
+            WebUtils.sendJson(exchange, 400, "{\"success\":false,\"error\":\"" + WebUtils.escapeJson(exception.getMessage()) + "\"}");
+        } catch (IllegalStateException exception) {
+            sendServerError(exchange);
+        }
+    }
+
+    private void handleDocumentDownload(HttpExchange exchange) throws IOException {
+        Optional<User> userOptional = currentUser(exchange);
+        if (userOptional.isEmpty()) {
+            WebUtils.sendJson(exchange, 401, "{\"success\":false,\"error\":\"Please log in first.\"}");
+            return;
+        }
+
+        if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+            WebUtils.sendJson(exchange, 405, "{\"error\":\"Method not allowed.\"}");
+            return;
+        }
+
+        try {
+            int documentId = Integer.parseInt(queryValue(exchange.getRequestURI(), "id"));
+            Optional<SecureDocument> documentOptional = documentService.getDocumentById(documentId, userOptional.get().getUserId());
+            if (documentOptional.isEmpty()) {
+                WebUtils.sendJson(exchange, 404, "{\"success\":false,\"error\":\"Document not found.\"}");
+                return;
+            }
+
+            SecureDocument document = documentOptional.get();
+            byte[] fileBytes = documentService.readDocumentBytes(document);
+            String contentType = document.getMimeType().isBlank() ? "application/octet-stream" : document.getMimeType();
+            exchange.getResponseHeaders().set("Content-Type", contentType);
+            exchange.getResponseHeaders().set("Content-Disposition", "attachment; filename=\"" + safeDownloadName(document.getOriginalFileName()) + "\"");
+            exchange.sendResponseHeaders(200, fileBytes.length);
+
+            try (OutputStream outputStream = exchange.getResponseBody()) {
+                outputStream.write(fileBytes);
+            }
+        } catch (IllegalArgumentException exception) {
+            WebUtils.sendJson(exchange, 400, "{\"success\":false,\"error\":\"Invalid input.\"}");
+        } catch (IllegalStateException exception) {
+            sendServerError(exchange);
+        }
+    }
+
     private void handleHealth(HttpExchange exchange) throws IOException {
         WebUtils.sendJson(exchange, 200, "{\"status\":\"ok\",\"message\":\"Web server is running.\"}");
     }
@@ -270,6 +364,31 @@ public class PasswordManagerWebServer {
         return json.toString();
     }
 
+    private String buildDocumentsJson(List<SecureDocument> documents) {
+        StringBuilder json = new StringBuilder();
+        json.append("{\"items\":[");
+
+        for (int index = 0; index < documents.size(); index++) {
+            SecureDocument document = documents.get(index);
+            if (index > 0) {
+                json.append(',');
+            }
+            json.append("{")
+                    .append("\"documentId\":").append(document.getDocumentId()).append(",")
+                    .append("\"title\":\"").append(WebUtils.escapeJson(document.getTitle())).append("\",")
+                    .append("\"originalFileName\":\"").append(WebUtils.escapeJson(document.getOriginalFileName())).append("\",")
+                    .append("\"mimeType\":\"").append(WebUtils.escapeJson(document.getMimeType())).append("\",")
+                    .append("\"category\":\"").append(WebUtils.escapeJson(document.getCategory())).append("\",")
+                    .append("\"notes\":\"").append(WebUtils.escapeJson(document.getNotes())).append("\",")
+                    .append("\"fileSizeBytes\":").append(document.getFileSizeBytes()).append(",")
+                    .append("\"dateAdded\":\"").append(WebUtils.escapeJson(document.getDateAdded())).append("\"")
+                    .append("}");
+        }
+
+        json.append("]}");
+        return json.toString();
+    }
+
     private String buildSessionJson(User user) {
         return "{"
                 + "\"authenticated\":true,"
@@ -291,5 +410,9 @@ public class PasswordManagerWebServer {
 
     private void sendServerError(HttpExchange exchange) throws IOException {
         WebUtils.sendJson(exchange, 500, "{\"success\":false,\"error\":\"Database error occurred.\"}");
+    }
+
+    private String safeDownloadName(String fileName) {
+        return fileName == null ? "download" : fileName.replace("\\", "_").replace("\"", "_");
     }
 }

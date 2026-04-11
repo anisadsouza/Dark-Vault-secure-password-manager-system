@@ -6,7 +6,7 @@
     <groupId>com.passwordmanager</groupId>
     <artifactId>secure-password-manager</artifactId>
     <version>1.0.0</version>
-    <name>Secure Password Manager System</name>
+    <name>Secure Digital Vault System</name>
 
     <properties>
         <maven.compiler.release>17</maven.compiler.release>

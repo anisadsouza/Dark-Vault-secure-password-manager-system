@@ -2,12 +2,15 @@ package com.passwordmanager;
 
 import com.passwordmanager.config.DatabaseInitializer;
 import com.passwordmanager.dao.CredentialDAO;
+import com.passwordmanager.dao.DocumentDAO;
 import com.passwordmanager.dao.UserDAO;
 import com.passwordmanager.dao.impl.CredentialDAOImpl;
+import com.passwordmanager.dao.impl.DocumentDAOImpl;
 import com.passwordmanager.dao.impl.UserDAOImpl;
 import com.passwordmanager.service.AESEncryptionService;
 import com.passwordmanager.service.AuthService;
 import com.passwordmanager.service.CredentialService;
+import com.passwordmanager.service.DocumentService;
 import com.passwordmanager.service.EncryptionService;
 import com.passwordmanager.web.PasswordManagerWebServer;
 
@@ -17,12 +20,14 @@ public class MainApp {
 
         UserDAO userDAO = new UserDAOImpl();
         CredentialDAO credentialDAO = new CredentialDAOImpl();
+        DocumentDAO documentDAO = new DocumentDAOImpl();
         EncryptionService encryptionService = new AESEncryptionService();
 
         AuthService authService = new AuthService(userDAO);
         CredentialService credentialService = new CredentialService(credentialDAO, encryptionService);
+        DocumentService documentService = new DocumentService(documentDAO);
 
-        PasswordManagerWebServer webServer = new PasswordManagerWebServer(authService, credentialService);
+        PasswordManagerWebServer webServer = new PasswordManagerWebServer(authService, credentialService, documentService);
         int port = startWebServer(webServer, args);
 
         System.out.println("Dark Vault is running at http://localhost:" + port);
