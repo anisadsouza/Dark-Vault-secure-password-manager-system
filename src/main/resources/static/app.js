@@ -21,6 +21,7 @@ const summaryStrip = document.getElementById("summary-strip");
 const dashboardMessage = document.getElementById("dashboard-message");
 const statCredentials = document.getElementById("stat-credentials");
 const statSites = document.getElementById("stat-sites");
+const statDocuments = document.getElementById("stat-documents");
 const credentialModal = document.getElementById("credential-modal");
 const closeModalButton = document.getElementById("close-modal-button");
 const credentialForm = document.getElementById("credential-form");
@@ -39,9 +40,22 @@ const registerStrengthText = document.getElementById("register-strength-text");
 const credentialStrength = document.getElementById("credential-strength");
 const credentialStrengthFill = document.getElementById("credential-strength-fill");
 const credentialStrengthText = document.getElementById("credential-strength-text");
+const documentForm = document.getElementById("document-form");
+const documentTitleInput = document.getElementById("document-title");
+const documentCategoryInput = document.getElementById("document-category");
+const documentFileInput = document.getElementById("document-file");
+const documentNotesInput = document.getElementById("document-notes");
+const documentSaveButton = document.getElementById("document-save-button");
+const documentFormMessage = document.getElementById("document-form-message");
+const documentSearchInput = document.getElementById("document-search-input");
+const documentSearchButton = document.getElementById("document-search-button");
+const documentClearButton = document.getElementById("document-clear-button");
+const documentMessage = document.getElementById("document-message");
+const documentGrid = document.getElementById("document-grid");
 
 let currentSession = null;
 let currentCredentials = [];
+let currentDocuments = [];
 
 document.addEventListener("DOMContentLoaded", () => {
     bindEvents();
@@ -84,6 +98,17 @@ function bindEvents() {
         updateCredentialSaveButtonState();
     });
     credentialGenerateButton.addEventListener("click", generateCredentialPassword);
+    documentForm.addEventListener("submit", handleDocumentSave);
+    documentTitleInput.addEventListener("input", updateDocumentSaveButtonState);
+    documentFileInput.addEventListener("change", updateDocumentSaveButtonState);
+    documentSearchButton.addEventListener("click", () => loadDocuments(documentSearchInput.value.trim()));
+    documentClearButton.addEventListener("click", clearDocumentSearch);
+    documentSearchInput.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            loadDocuments(documentSearchInput.value.trim());
+        }
+    });
     document.addEventListener("keydown", event => {
         if (event.key === "Escape" && !credentialModal.classList.contains("hidden")) {
             closeCredentialModal();
@@ -91,6 +116,7 @@ function bindEvents() {
     });
     updateRegisterButtonState();
     updateCredentialSaveButtonState();
+    updateDocumentSaveButtonState();
 }
 
 async function handleLogin(event) {
@@ -175,6 +201,7 @@ async function handleLogout() {
     appView.classList.add("hidden");
     currentSession = null;
     currentCredentials = [];
+    currentDocuments = [];
 }
 
 async function checkSession() {
@@ -202,7 +229,8 @@ async function showDashboard(session) {
     welcomeRole.textContent = session.displayRole || "Secure session";
     await Promise.all([
         loadCredentials(),
-        loadSummary()
+        loadSummary(),
+        loadDocuments()
     ]);
 }
 
@@ -258,6 +286,31 @@ async function loadSummary() {
     }
 }
 
+async function loadDocuments(search = "") {
+    try {
+        const query = search ? `?search=${encodeURIComponent(search)}` : "";
+        const response = await fetch(`/api/documents${query}`);
+        const result = await response.json();
+
+        if (!response.ok) {
+            showDocumentMessage(result.error || "Unable to load documents.", true);
+            return;
+        }
+
+        currentDocuments = result.items || [];
+        renderDocumentGrid(currentDocuments);
+        statDocuments.textContent = String(currentDocuments.length);
+
+        if (currentDocuments.length) {
+            showDocumentMessage(`Showing ${currentDocuments.length} document(s).`, false);
+        } else {
+            showDocumentMessage("No documents stored yet. Passwords remain the main vault above.", false);
+        }
+    } catch (error) {
+        showDocumentMessage("Unable to load documents.", true);
+    }
+}
+
 function renderCredentialGrid(credentials) {
     if (!credentials.length) {
         credentialGrid.innerHTML = `
@@ -301,9 +354,45 @@ function renderSummary(items) {
     `).join("");
 }
 
+function renderDocumentGrid(documents) {
+    if (!documents.length) {
+        documentGrid.innerHTML = `
+            <div class="preview-card">
+                <p class="eyebrow">DOCUMENT VAULT</p>
+                <h3>No documents stored yet.</h3>
+                <p>Add PDFs, Word files, CSVs, images, or other files here after managing your passwords above.</p>
+            </div>
+        `;
+        return;
+    }
+
+    documentGrid.innerHTML = documents.map(documentItem => `
+        <article class="document-card">
+            <div>
+                <h4>${escapeHtml(documentItem.title)}</h4>
+                <p>${escapeHtml(documentItem.notes || "No notes added.")}</p>
+            </div>
+            <div>
+                <p>${escapeHtml(documentItem.originalFileName)}</p>
+                <p>${formatFileSize(documentItem.fileSizeBytes)} · ${escapeHtml(documentItem.mimeType || "Unknown type")}</p>
+            </div>
+            <p>${escapeHtml(documentItem.category || "Uncategorized")}</p>
+            <div class="document-actions">
+                <a href="/api/documents/download?id=${documentItem.documentId}" target="_blank" rel="noopener">Download</a>
+                <button type="button" onclick="deleteDocument(${documentItem.documentId})">Delete</button>
+            </div>
+        </article>
+    `).join("");
+}
+
 function clearSearch() {
     searchInput.value = "";
     loadCredentials();
+}
+
+function clearDocumentSearch() {
+    documentSearchInput.value = "";
+    loadDocuments();
 }
 
 function openCredentialModal(credential = null) {
@@ -383,6 +472,74 @@ async function deleteCredential(credentialId) {
 
     await Promise.all([loadCredentials(searchInput.value.trim()), loadSummary()]);
     showDashboardMessage("Credential deleted successfully.", false);
+}
+
+async function handleDocumentSave(event) {
+    event.preventDefault();
+    const selectedFile = documentFileInput.files[0];
+    const validationError = validateDocumentInput(documentTitleInput.value.trim(), selectedFile);
+    if (validationError) {
+        showDocumentFormMessage(validationError, true);
+        return;
+    }
+
+    documentSaveButton.disabled = true;
+
+    try {
+        const fileData = await readFileAsDataUrl(selectedFile);
+        const body = new URLSearchParams();
+        body.set("title", documentTitleInput.value.trim());
+        body.set("fileName", selectedFile.name);
+        body.set("mimeType", selectedFile.type || "application/octet-stream");
+        body.set("category", documentCategoryInput.value.trim());
+        body.set("notes", documentNotesInput.value.trim());
+        body.set("fileData", fileData);
+
+        const response = await fetch("/api/documents", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+            },
+            body
+        });
+        const result = await response.json();
+
+        if (!response.ok) {
+            showDocumentFormMessage(result.error || "Unable to save document.", true);
+            updateDocumentSaveButtonState();
+            return;
+        }
+
+        documentForm.reset();
+        updateDocumentSaveButtonState();
+        await loadDocuments(documentSearchInput.value.trim());
+        showDocumentFormMessage("Document saved successfully.", false);
+    } catch (error) {
+        showDocumentFormMessage("Unable to save document.", true);
+    } finally {
+        updateDocumentSaveButtonState();
+    }
+}
+
+async function deleteDocument(documentId) {
+    const confirmed = window.confirm("Delete this document?");
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/documents?id=${documentId}`, { method: "DELETE" });
+        const result = await response.json();
+        if (!response.ok) {
+            showDocumentMessage(result.error || "Delete failed.", true);
+            return;
+        }
+
+        await loadDocuments(documentSearchInput.value.trim());
+        showDocumentMessage("Document deleted successfully.", false);
+    } catch (error) {
+        showDocumentMessage("Unable to delete document.", true);
+    }
 }
 
 function editCredential(credentialId) {
@@ -508,6 +665,26 @@ function validateCredentialInput(siteName, siteUsername, password) {
     return validatePassword(password);
 }
 
+function validateDocumentInput(title, selectedFile) {
+    if (!title) {
+        return "Document title cannot be empty";
+    }
+
+    if (!selectedFile) {
+        return "Please select a file";
+    }
+
+    if (!isValidInput(title)) {
+        return "Invalid input";
+    }
+
+    if (selectedFile.size > 10 * 1024 * 1024) {
+        return "File must be 10 MB or smaller";
+    }
+
+    return "";
+}
+
 function validatePassword(password) {
     if (password.length < 8) {
         return "Password must be at least 8 characters";
@@ -535,6 +712,18 @@ function showCredentialFormMessage(message, isError) {
     credentialFormMessage.classList.toggle("success", Boolean(message) && !isError);
 }
 
+function showDocumentFormMessage(message, isError) {
+    documentFormMessage.textContent = message;
+    documentFormMessage.classList.toggle("error", isError);
+    documentFormMessage.classList.toggle("success", Boolean(message) && !isError);
+}
+
+function showDocumentMessage(message, isError) {
+    documentMessage.textContent = message;
+    documentMessage.classList.toggle("error", isError);
+    documentMessage.classList.toggle("success", Boolean(message) && !isError);
+}
+
 function bindPasswordToggleButtons() {
     const toggleButtons = document.querySelectorAll("[data-password-toggle]");
 
@@ -559,6 +748,10 @@ function updateRegisterButtonState() {
 
 function updateCredentialSaveButtonState() {
     credentialSaveButton.disabled = !siteNameInput.value.trim() || !siteUsernameInput.value.trim() || !sitePasswordInput.value;
+}
+
+function updateDocumentSaveButtonState() {
+    documentSaveButton.disabled = !documentTitleInput.value.trim() || !documentFileInput.files.length;
 }
 
 function generateRegisterPassword() {
@@ -613,6 +806,26 @@ function shuffleCharacters(characters) {
     return copy;
 }
 
+function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+    });
+}
+
+function formatFileSize(sizeInBytes) {
+    const size = Number(sizeInBytes) || 0;
+    if (size < 1024) {
+        return `${size} B`;
+    }
+    if (size < 1024 * 1024) {
+        return `${(size / 1024).toFixed(1)} KB`;
+    }
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function escapeHtml(value) {
     return String(value || "")
         .replaceAll("&", "&amp;")
@@ -627,3 +840,4 @@ window.copyPassword = copyPassword;
 window.editCredential = editCredential;
 window.deleteCredential = deleteCredential;
 window.filterBySite = filterBySite;
+window.deleteDocument = deleteDocument;

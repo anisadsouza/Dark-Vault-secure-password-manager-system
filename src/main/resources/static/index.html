@@ -79,6 +79,10 @@
                     <span class="stat-label">Sites</span>
                     <strong id="stat-sites">0</strong>
                 </div>
+                <div class="stat-box secondary-stat">
+                    <span class="stat-label">Documents</span>
+                    <strong id="stat-documents">0</strong>
+                </div>
             </div>
             <button id="add-button" class="primary-button" type="button">Add Credential</button>
             <button id="logout-button" class="secondary-button" type="button">Logout</button>
@@ -109,6 +113,51 @@
                 </div>
                 <div id="credential-grid" class="credential-grid"></div>
 
+                <section class="document-panel">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">SECONDARY VAULT</p>
+                            <h3>Secure Documents</h3>
+                            <p>Store PDFs, Word files, CSVs, images, and other important files after your password vault.</p>
+                        </div>
+                    </div>
+
+                    <form id="document-form" class="document-form">
+                        <div>
+                            <label>Document Title</label>
+                            <input id="document-title" name="title" type="text" placeholder="e.g. Passport Copy" required>
+                        </div>
+                        <div>
+                            <label>Category</label>
+                            <input id="document-category" name="category" type="text" placeholder="e.g. Personal, Academic, Finance">
+                        </div>
+                        <div>
+                            <label>Select File</label>
+                            <input id="document-file" name="file" type="file" required>
+                        </div>
+                        <div>
+                            <label>Notes</label>
+                            <textarea id="document-notes" name="notes" rows="3" placeholder="Optional notes"></textarea>
+                        </div>
+                        <p id="document-form-message" class="status-text"></p>
+                        <button id="document-save-button" class="primary-button" type="submit">Save Document</button>
+                    </form>
+
+                    <div class="toolbar-panel document-toolbar">
+                        <input id="document-search-input" type="text" placeholder="Search documents by title, file name, or category">
+                        <button id="document-search-button" class="secondary-button" type="button">Search</button>
+                        <button id="document-clear-button" class="secondary-button" type="button">Clear</button>
+                    </div>
+
+                    <p id="document-message" class="status-text"></p>
+                    <div class="document-table-header">
+                        <span>Title</span>
+                        <span>File</span>
+                        <span>Category</span>
+                        <span>Actions</span>
+                    </div>
+                    <div id="document-grid" class="document-grid"></div>
+                </section>
             </div>
         </section>
     </section>
