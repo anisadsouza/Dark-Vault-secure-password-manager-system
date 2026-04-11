@@ -46,7 +46,13 @@ let visiblePasswords = new Set();
 
 document.addEventListener("DOMContentLoaded", async () => {
     bindEvents();
-    await initializeExtension();
+    try {
+        await initializeExtension();
+    } catch (error) {
+        console.error("Dark Vault extension failed to initialize:", error);
+        showAuthView("register");
+        showAuthMessage("Extension storage error. Reload the extension and try again.", true);
+    }
 });
 
 function bindEvents() {
@@ -130,12 +136,10 @@ async function handleRegister(event) {
         passwordHash: await hashValue(password)
     };
 
-    await chrome.storage.local.set({ [ACCOUNT_KEY]: account });
-    await chrome.storage.session.set({
-        [SESSION_KEY]: {
-            authenticated: true,
-            username
-        }
+    await setStoredValue("local", ACCOUNT_KEY, account);
+    await setStoredValue("session", SESSION_KEY, {
+        authenticated: true,
+        username
     });
 
     currentUser = username;
@@ -172,11 +176,9 @@ async function handleLogin(event) {
         return;
     }
 
-    await chrome.storage.session.set({
-        [SESSION_KEY]: {
-            authenticated: true,
-            username
-        }
+    await setStoredValue("session", SESSION_KEY, {
+        authenticated: true,
+        username
     });
 
     currentUser = username;
@@ -188,7 +190,7 @@ async function handleLogin(event) {
 }
 
 async function handleLogout() {
-    await chrome.storage.session.remove(SESSION_KEY);
+    await removeStoredValue("session", SESSION_KEY);
     currentUser = null;
     allCredentials = [];
     visiblePasswords = new Set();
@@ -390,13 +392,11 @@ function shuffle(characters) {
 }
 
 async function getStoredAccount() {
-    const result = await chrome.storage.local.get([ACCOUNT_KEY]);
-    return result[ACCOUNT_KEY] || null;
+    return getStoredValue("local", ACCOUNT_KEY);
 }
 
 async function getStoredSession() {
-    const result = await chrome.storage.session.get([SESSION_KEY]);
-    return result[SESSION_KEY] || null;
+    return getStoredValue("session", SESSION_KEY);
 }
 
 function currentCredentialsKey() {
@@ -404,13 +404,13 @@ function currentCredentialsKey() {
 }
 
 async function loadCredentials() {
-    const result = await chrome.storage.local.get([currentCredentialsKey()]);
-    allCredentials = Array.isArray(result[currentCredentialsKey()]) ? result[currentCredentialsKey()] : [];
+    const credentials = await getStoredValue("local", currentCredentialsKey());
+    allCredentials = Array.isArray(credentials) ? credentials : [];
     renderCredentials();
 }
 
 async function saveCredentials() {
-    await chrome.storage.local.set({ [currentCredentialsKey()]: allCredentials });
+    await setStoredValue("local", currentCredentialsKey(), allCredentials);
 }
 
 function renderCredentials() {
@@ -542,6 +542,68 @@ async function hashValue(value) {
     return Array.from(new Uint8Array(hashBuffer))
         .map(byte => byte.toString(16).padStart(2, "0"))
         .join("");
+}
+
+function getStorageArea(areaName) {
+    if (typeof chrome === "undefined" || !chrome.storage) {
+        return null;
+    }
+
+    if (areaName === "session" && chrome.storage.session) {
+        return chrome.storage.session;
+    }
+
+    return chrome.storage.local || null;
+}
+
+function getStoredValue(areaName, key) {
+    const storageArea = getStorageArea(areaName);
+    if (!storageArea) {
+        return Promise.resolve(readBrowserFallback(key));
+    }
+
+    return new Promise(resolve => {
+        storageArea.get([key], result => {
+            resolve(result ? result[key] || null : null);
+        });
+    });
+}
+
+function setStoredValue(areaName, key, value) {
+    const storageArea = getStorageArea(areaName);
+    if (!storageArea) {
+        writeBrowserFallback(key, value);
+        return Promise.resolve();
+    }
+
+    return new Promise(resolve => {
+        storageArea.set({ [key]: value }, resolve);
+    });
+}
+
+function removeStoredValue(areaName, key) {
+    const storageArea = getStorageArea(areaName);
+    if (!storageArea) {
+        localStorage.removeItem(key);
+        return Promise.resolve();
+    }
+
+    return new Promise(resolve => {
+        storageArea.remove(key, resolve);
+    });
+}
+
+function readBrowserFallback(key) {
+    try {
+        const rawValue = localStorage.getItem(key);
+        return rawValue ? JSON.parse(rawValue) : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+function writeBrowserFallback(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
 }
 
 function isValidInput(value) {
