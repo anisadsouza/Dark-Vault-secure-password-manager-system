@@ -507,7 +507,3 @@ Possible improvements:
 - stronger authentication
 - encryption for uploaded documents
 - REST API version
-
-## Author
-
-Developed as an academic Java + JDBC project demonstrating Object-Oriented Programming, layered architecture, secure credential management, and relational database persistence.
