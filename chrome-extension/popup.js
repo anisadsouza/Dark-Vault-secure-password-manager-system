@@ -1,5 +1,5 @@
 const ACCOUNT_KEY = "darkVaultExtensionAccount";
-const SESSION_KEY = "darkVaultExtensionSession";
+const SESSION_KEY = "darkVaultExtensionActiveUser";
 const CREDENTIALS_PREFIX = "darkVaultCredentials:";
 
 const authView = document.getElementById("auth-view");
@@ -85,7 +85,7 @@ async function initializeExtension() {
     const account = await getStoredAccount();
     const session = await getStoredSession();
 
-    if (account && session?.authenticated && session.username === account.username) {
+    if (account && session?.username === account.username) {
         currentUser = account.username;
         welcomeText.textContent = `Welcome back, ${currentUser}.`;
         showAppView();
@@ -137,8 +137,7 @@ async function handleRegister(event) {
     };
 
     await setStoredValue("local", ACCOUNT_KEY, account);
-    await setStoredValue("session", SESSION_KEY, {
-        authenticated: true,
+    await setStoredValue("local", SESSION_KEY, {
         username
     });
 
@@ -176,8 +175,7 @@ async function handleLogin(event) {
         return;
     }
 
-    await setStoredValue("session", SESSION_KEY, {
-        authenticated: true,
+    await setStoredValue("local", SESSION_KEY, {
         username
     });
 
@@ -190,7 +188,7 @@ async function handleLogin(event) {
 }
 
 async function handleLogout() {
-    await removeStoredValue("session", SESSION_KEY);
+    await removeStoredValue("local", SESSION_KEY);
     currentUser = null;
     allCredentials = [];
     visiblePasswords = new Set();
@@ -396,7 +394,7 @@ async function getStoredAccount() {
 }
 
 async function getStoredSession() {
-    return getStoredValue("session", SESSION_KEY);
+    return getStoredValue("local", SESSION_KEY);
 }
 
 function currentCredentialsKey() {
