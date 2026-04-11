@@ -1,111 +1,118 @@
 # Dark Vault: Secure Digital Vault System
 
-A browser-based Java application for securely storing and managing website credentials and file records using JDBC and a relational database.
+Dark Vault is a Java-based secure vault application with the **password manager as the main feature** and a secondary secure document vault for storing important files such as PDFs, Word documents, CSV files, and images.
 
-This project was developed as a real-world Object-Oriented Programming and Database Connectivity assignment. It demonstrates software engineering practices, layered architecture, modular programming, CRUD operations, input validation, and data persistence in Java.
+The project was built for a Java + JDBC software engineering assignment. It demonstrates Object-Oriented Programming, layered architecture, relational database design, CRUD operations, input validation, exception handling, and persistent storage using SQLite.
 
-## Project Overview
+## Main Purpose
 
-Dark Vault is a secure digital vault built with Java, SQLite, JDBC, HTML, CSS, and JavaScript. It allows users to register, log in, manage website credentials, and store secure document/file records through a cyber-themed browser interface.
+The main goal of Dark Vault is to provide a secure browser-based dashboard where users can manage website credentials. The document vault is added as an extra feature to make the system more practical and unique, but the password manager remains the primary module.
 
-The system supports:
+## What Makes This Project Different
 
-- user registration and login
-- credential creation, viewing, updating, deletion, and search
+Most basic academic projects use common domains such as student management or library management. Dark Vault is different because it is based on a cybersecurity-style real-world use case.
+
+It includes:
+
+- secure credential management as the main feature
+- encrypted storage of saved passwords
 - password strength checking
-- password generation
-- password masking and reveal
-- encrypted password storage
-- secure document/file storage foundation
-- downloadable stored files through the Java web server
-- site summary statistics
-
-## Assignment Alignment
-
-This project satisfies the major assignment requirements:
-
-- `Programming Language`: Java
-- `Database`: SQLite
-- `Database Connectivity`: JDBC
-- `Architecture`: Presentation Layer, Business Logic Layer, DAO Layer, Database Layer
-- `Core OOP Concepts`: classes, objects, encapsulation, inheritance, polymorphism, abstraction
-- `CRUD Operations`: implemented for credential management and document/file records
-- `Validation and Exception Handling`: included across UI, service, and DAO layers
+- strong password generation
+- show/hide password controls
+- a secondary secure document vault
+- SQLite database persistence through JDBC
+- local browser dashboard powered by a Java backend
 
 ## Technology Stack
 
-| Category | Technology |
+| Category | Technology Used |
 | --- | --- |
-| Language | Java 17 |
+| Programming Language | Java 17 |
 | Build Tool | Maven |
 | Database | SQLite |
+| Database Connectivity | JDBC |
 | JDBC Driver | `org.xerial:sqlite-jdbc:3.46.1.3` |
-| Backend | Java built-in `HttpServer` |
+| Backend Server | Java built-in `HttpServer` |
 | Frontend | HTML, CSS, JavaScript |
-| Encryption | AES for credential encryption, SHA-256 for password hashing |
-| File Storage | Local `vault-files/` folder with metadata in SQLite |
+| Credential Encryption | AES |
+| User Password Hashing | SHA-256 |
+| File Storage | Local `vault-files/` folder |
 
-## Features
+## Core Features
 
-### User Management
+### 1. Password Manager Module
 
-- Register a new user
-- Login with username and password
+This is the main module of the project.
 
-### Credential Management
-
-- Add credential
-- View all saved credentials
+- Register user
+- Login user
+- Add website credential
+- View saved credentials
 - Search credentials by site name or username
-- Edit existing credential
+- Edit credential
 - Delete credential
-
-### Secure Document Vault
-
-- Save file metadata in SQLite
-- Store actual uploaded files in a local `vault-files/` folder
-- Search document records by title, file name, or category
-- Delete document records and stored files
-- Download stored files through the Java web server
-
-### Security and Usability Features
-
-- Passwords stored in encrypted form in the database
-- User account passwords stored as SHA-256 hashes
-- Password strength checker: `Weak / Medium / Strong`
+- Copy password
+- Show/Hide password
+- Password strength checker: `Weak`, `Medium`, `Strong`
 - Strong password generator
-- Show/Hide password option
-- Masked passwords in dashboard view
+- Password masking in dashboard
 
-### Validation and Reliability
+### 2. Secure Document Vault Module
 
-- Empty field validation
-- Invalid input validation
-- Minimum password length validation
-- Database exception handling using `try-catch`
+This is a secondary feature below the password manager.
+
+- Upload document/file records
+- Store actual files locally in `vault-files/`
+- Store file metadata in SQLite
+- Search documents by title, file name, or category
+- Download stored files
+- Delete stored files
+
+Supported file examples:
+
+- PDF
+- Word documents
+- CSV files
+- images
+- text files
+- other common local files
+
+## Important Storage Explanation
+
+Dark Vault uses two types of storage:
+
+| Data Type | Where It Is Stored |
+| --- | --- |
+| User account data | SQLite database |
+| Website credential records | SQLite database |
+| Encrypted credential passwords | SQLite database |
+| Document metadata | SQLite database |
+| Actual uploaded files | Local `vault-files/` folder |
+
+This design keeps SQLite as the main relational database while avoiding large file BLOB storage inside the database. Instead, SQLite stores the file path and metadata, and the actual file is saved locally.
 
 ## System Architecture
 
-The project follows a layered architecture:
+The project follows a layered architecture.
 
-### 1. Presentation Layer
+### Presentation Layer
 
-Responsible for the browser interface.
+Responsible for the browser-based user interface.
 
 - `src/main/resources/static/index.html`
 - `src/main/resources/static/styles.css`
 - `src/main/resources/static/app.js`
 
-### 2. Business Logic Layer
+### Business Logic Layer
 
-Responsible for application rules and processing.
+Responsible for validation, processing, encryption, and application rules.
 
 - `AuthService`
 - `CredentialService`
 - `DocumentService`
 - `AESEncryptionService`
 
-### 3. Data Access Layer
+### Data Access Layer
 
 Responsible for database interaction using JDBC.
 
@@ -116,19 +123,22 @@ Responsible for database interaction using JDBC.
 - `CredentialDAOImpl`
 - `DocumentDAOImpl`
 
-### 4. Database Layer
+### Database Layer
 
-Responsible for tables and persistent data.
+Responsible for persistent relational data.
 
 - SQLite database file created at runtime
-- Uploaded files stored locally in `vault-files/`
-- SQL scripts in `database/`
+- SQL schema in `database/schema.sql`
+- file metadata stored in SQLite
+- actual files stored in `vault-files/`
 
 ## OOP Concepts Demonstrated
 
 ### Classes and Objects
 
-The project uses multiple classes such as:
+The project contains multiple classes that represent models, services, DAO objects, and the web server.
+
+Examples:
 
 - `User`
 - `StandardUser`
@@ -137,14 +147,11 @@ The project uses multiple classes such as:
 - `AuthService`
 - `CredentialService`
 - `DocumentService`
-- `UserDAOImpl`
-- `CredentialDAOImpl`
-- `DocumentDAOImpl`
 - `PasswordManagerWebServer`
 
 ### Encapsulation
 
-Model classes use private fields with getters and setters.
+Model classes use private fields with public getters and setters.
 
 Examples:
 
@@ -158,23 +165,28 @@ Examples:
 
 ### Polymorphism
 
-Method overriding is used through subclass behavior such as:
+Polymorphism is demonstrated through method overriding and interface-based design.
+
+Examples:
 
 - `StandardUser#getDisplayRole()`
-
-Interface-based polymorphism is also used through DAO and encryption abstractions.
+- `EncryptionService` implemented by `AESEncryptionService`
+- `CredentialDAO` implemented by `CredentialDAOImpl`
+- `DocumentDAO` implemented by `DocumentDAOImpl`
 
 ### Abstraction
 
-The project demonstrates abstraction through:
+The project uses:
 
 - abstract class: `User`
 - interface: `EncryptionService`
-- interfaces: `UserDAO`, `CredentialDAO`
+- interface: `UserDAO`
+- interface: `CredentialDAO`
+- interface: `DocumentDAO`
 
 ### Constructors
 
-Constructors are used in model classes and service classes to initialize application state and dependencies.
+Constructors are used in model and service classes to initialize fields and dependencies.
 
 ### Collections
 
@@ -185,12 +197,12 @@ The project uses Java collections such as:
 
 Examples:
 
-- returning credential lists from DAO/service layers
-- building site summary counts using `Map<String, Integer>`
+- returning credential and document lists
+- building site summary statistics using `Map<String, Integer>`
 
 ## Database Design
 
-The project uses a relational SQLite database with three main tables.
+The project uses SQLite with three main relational tables.
 
 ### `users`
 
@@ -198,8 +210,8 @@ The project uses a relational SQLite database with three main tables.
 | --- | --- | --- |
 | `user_id` | INTEGER | Primary key |
 | `username` | TEXT | Unique username |
-| `password_hash` | TEXT | SHA-256 hashed password |
-| `role` | TEXT | User role |
+| `password_hash` | TEXT | SHA-256 hashed user password |
+| `role` | TEXT | Standard user role |
 
 ### `credentials`
 
@@ -207,8 +219,8 @@ The project uses a relational SQLite database with three main tables.
 | --- | --- | --- |
 | `cred_id` | INTEGER | Primary key |
 | `user_id` | INTEGER | Foreign key referencing `users.user_id` |
-| `site_name` | TEXT | Website or platform name |
-| `site_username` | TEXT | Username/email used for that site |
+| `site_name` | TEXT | Website/platform name |
+| `site_username` | TEXT | Username or email for the site |
 | `encrypted_password` | TEXT | AES-encrypted password |
 | `notes` | TEXT | Optional notes |
 
@@ -218,21 +230,43 @@ The project uses a relational SQLite database with three main tables.
 | --- | --- | --- |
 | `document_id` | INTEGER | Primary key |
 | `user_id` | INTEGER | Foreign key referencing `users.user_id` |
-| `title` | TEXT | Display title for the document |
+| `title` | TEXT | Document display title |
 | `original_file_name` | TEXT | Original uploaded file name |
-| `stored_file_path` | TEXT | Path to file stored in `vault-files/` |
-| `mime_type` | TEXT | File type such as PDF, image, CSV, or Word |
-| `category` | TEXT | Document category |
+| `stored_file_path` | TEXT | Path to file inside `vault-files/` |
+| `mime_type` | TEXT | File MIME type |
+| `category` | TEXT | Optional document category |
 | `notes` | TEXT | Optional notes |
-| `file_size_bytes` | INTEGER | Stored file size |
-| `date_added` | TEXT | Upload timestamp |
+| `file_size_bytes` | INTEGER | File size in bytes |
+| `date_added` | TEXT | Date/time document was added |
 
-### Relationship
+### Relationships
 
-- One user can have many credentials
-- One user can have many secure documents
-- `credentials.user_id` references `users.user_id`
-- `secure_documents.user_id` references `users.user_id`
+- One user can have many credentials.
+- One user can have many secure documents.
+- `credentials.user_id` references `users.user_id`.
+- `secure_documents.user_id` references `users.user_id`.
+
+## CRUD Operations
+
+### Credential CRUD
+
+| Operation | Feature |
+| --- | --- |
+| Create | Add credential |
+| Read | View credential dashboard |
+| Update | Edit credential |
+| Delete | Delete credential |
+| Search | Search by site name or username |
+
+### Document CRUD
+
+| Operation | Feature |
+| --- | --- |
+| Create | Upload/save document |
+| Read | View document list |
+| Delete | Delete document |
+| Search | Search by title, file name, or category |
+| Download | Download stored file |
 
 ## Project Structure
 
@@ -249,6 +283,7 @@ PasswordManager/
 │       ├── java/com/passwordmanager/
 │       │   ├── config/
 │       │   ├── dao/
+│       │   │   └── impl/
 │       │   ├── model/
 │       │   ├── service/
 │       │   ├── web/
@@ -257,129 +292,222 @@ PasswordManager/
 │           ├── app.js
 │           ├── index.html
 │           └── styles.css
+├── vault-files/
 ├── pom.xml
 └── README.md
 ```
 
-## Main Java Files
+Note: `vault-files/` is created locally for uploaded files and is ignored by Git.
+
+## Important Files
 
 | File | Purpose |
 | --- | --- |
 | `MainApp.java` | Application entry point |
-| `DatabaseConfig.java` | Creates database connections |
-| `DatabaseInitializer.java` | Creates database tables |
-| `User.java` | Abstract base class for users |
-| `StandardUser.java` | Concrete user implementation |
+| `DatabaseConfig.java` | SQLite connection configuration |
+| `DatabaseInitializer.java` | Creates required database tables |
+| `User.java` | Abstract user model |
+| `StandardUser.java` | Standard user implementation |
 | `Credential.java` | Credential model |
-| `AuthService.java` | Registration and login logic |
+| `SecureDocument.java` | Document/file metadata model |
+| `AuthService.java` | Register/login logic |
 | `CredentialService.java` | Credential business logic |
-| `DocumentService.java` | Secure document/file storage logic |
-| `AESEncryptionService.java` | Encrypts and decrypts credential passwords |
+| `DocumentService.java` | Document upload/download/delete logic |
+| `AESEncryptionService.java` | AES encryption for saved passwords |
 | `UserDAOImpl.java` | JDBC operations for users |
 | `CredentialDAOImpl.java` | JDBC operations for credentials |
-| `DocumentDAOImpl.java` | JDBC operations for document records |
-| `PasswordManagerWebServer.java` | Local web server and API routing |
+| `DocumentDAOImpl.java` | JDBC operations for secure documents |
+| `PasswordManagerWebServer.java` | Web server and API routes |
+| `index.html` | Browser UI structure |
+| `styles.css` | Cyber-themed UI styling |
+| `app.js` | Browser UI behavior and API calls |
 
-## Frontend Interface
+## Web API Overview
 
-The project uses a local browser-based UI instead of a console UI. When the application runs, it starts a local server and opens through a browser URL such as:
+The browser UI communicates with the Java backend using local API routes.
 
-```text
-http://localhost:8080
-```
+### Auth APIs
 
-The interface includes:
+- `POST /api/register`
+- `POST /api/login`
+- `POST /api/logout`
+- `GET /api/session`
 
-- login/register page
-- dashboard with credential grid
-- search bar
-- add/edit credential modal
-- password reveal buttons
-- password strength meter
-- vault summary section
+### Credential APIs
 
-The backend also includes secure document/file APIs. Uploaded files are copied to `vault-files/`, while file metadata is stored in SQLite.
+- `GET /api/credentials`
+- `POST /api/credentials`
+- `PUT /api/credentials`
+- `DELETE /api/credentials?id=...`
+- `GET /api/summary`
 
-## How to Run the Project
+### Document APIs
+
+- `GET /api/documents`
+- `POST /api/documents`
+- `DELETE /api/documents?id=...`
+- `GET /api/documents/download?id=...`
+
+## How to Run
 
 ### Requirements
 
 - Java 17 or higher
 - Maven
+- Chrome or any modern browser
 
 ### Run Command
+
+From the project folder, run:
 
 ```bash
 mvn -Dmaven.repo.local=.m2 compile org.codehaus.mojo:exec-maven-plugin:3.5.0:java
 ```
 
-Then open the printed URL in Chrome or any browser.
+The terminal will print a URL such as:
 
-If port `8080` is already in use, the application automatically tries fallback ports like `8081`, `8082`, or `8083`.
+```text
+Dark Vault is running at http://localhost:8080
+```
 
-## Database Files
+Open that URL in Chrome.
 
-The project includes:
+If port `8080` is busy, the application automatically tries:
 
-- `database/schema.sql` for table creation
-- `database/sample-data.sql` for sample records
+- `8081`
+- `8082`
+- `8083`
 
-The runtime database file is created automatically when the application starts.
+Always use the exact URL printed in the terminal.
 
-Uploaded files are stored in:
+## How to Use
+
+1. Register a new user.
+2. Login with the registered account.
+3. Use the main password vault first:
+   - add credentials
+   - search credentials
+   - reveal/copy passwords
+   - edit or delete credentials
+4. Scroll below the password vault to use the secondary document vault:
+   - choose a file
+   - enter title/category/notes
+   - save the document
+   - download or delete the document later
+
+## File Storage Behavior
+
+Uploaded files are copied into:
 
 ```text
 vault-files/
 ```
 
-This folder is ignored by Git because it contains user-uploaded local files.
+The SQLite database stores:
+
+- document title
+- original file name
+- local stored path
+- MIME type
+- category
+- notes
+- file size
+- date added
+
+The actual file content is stored locally, not inside Git.
+
+## Git Ignore Notes
+
+The following files/folders are intentionally ignored:
+
+- `target/`
+- `.m2/`
+- `password_manager.db`
+- `vault-files/`
+- `.DS_Store`
+- compiled `.class` files
+- log files
+
+This prevents generated files, local dependencies, database files, and user-uploaded documents from being committed.
 
 ## Validation and Exception Handling
 
-This project includes both frontend and backend validation.
+Validation is implemented on both frontend and backend.
 
 Examples:
 
 - username cannot be empty
 - password cannot be empty
-- password minimum length validation
-- invalid input detection
+- password must be at least 8 characters
+- site name cannot be empty
+- file title cannot be empty
+- file must be selected before saving
+- invalid characters such as `<` and `>` are rejected
+- uploaded files are limited to 10 MB
 
-Database operations are protected with `try-catch` blocks using `SQLException`, which supports the assignment rubric for exception handling.
+Database operations use `try-catch` blocks with `SQLException`, and user-friendly error messages are returned to the browser.
 
 ## Security Notes
 
-This project demonstrates security concepts for academic purposes:
+This project demonstrates security concepts for academic purposes.
 
-- account passwords are hashed with SHA-256
-- saved site passwords are encrypted using AES
-- session handling is managed on the local web server
+Implemented security features:
 
-This is an educational project and not intended as a production-grade password manager.
+- user passwords are hashed using SHA-256
+- saved credential passwords are encrypted using AES
+- password fields are masked by default
+- reveal buttons are explicit user actions
+- local session cookie is used for the browser session
+- uploaded files are stored outside Git in `vault-files/`
 
-## Assignment Deliverables Covered
+Important academic note:
 
-This repository includes or supports the following deliverables:
+This project is suitable for demonstrating secure programming concepts, but it is not intended to replace a production-grade commercial password manager.
 
-- Java source code
-- SQL schema file
-- sample database records
-- browser-based user interface
-- class diagram documentation
-- project report template
-- application screenshots can be captured after running the project
+## Assignment Checklist
+
+| Requirement | Status |
+| --- | --- |
+| Java application | Implemented |
+| JDBC database connectivity | Implemented |
+| Relational database | SQLite |
+| CRUD operations | Implemented |
+| Minimum 5 classes | Implemented |
+| Encapsulation | Implemented |
+| Inheritance | Implemented |
+| Polymorphism | Implemented |
+| Abstraction/interface | Implemented |
+| Collections | Implemented |
+| Exception handling | Implemented |
+| Validation | Implemented |
+| Browser/GUI interface | Implemented |
+| SQL schema file | Included |
+| Class diagram support | Included in `docs/` |
+| Documentation | Included |
+
+## Bonus Feature
+
+The repository may also include a separate Chrome extension bonus feature in:
+
+```text
+chrome-extension/
+```
+
+This extension is separate from the Java + SQLite application. The main assignment project remains the Java browser app with SQLite and JDBC.
 
 ## Future Enhancements
 
-Possible future improvements include:
+Possible improvements:
 
-- export/import credentials
-- category-based filtering
+- edit/update secure document metadata
+- file preview for images/PDFs
+- export password records
+- category filters
 - unit testing
-- report generation
-- stronger production-grade authentication
-- Chrome extension version
+- stronger authentication
+- encryption for uploaded documents
+- REST API version
 
 ## Author
 
-Developed as an academic Java + JDBC project on Object-Oriented Programming, modular design, and relational database integration.
+Developed as an academic Java + JDBC project demonstrating Object-Oriented Programming, layered architecture, secure credential management, and relational database persistence.
