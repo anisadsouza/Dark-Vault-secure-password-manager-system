@@ -36,7 +36,7 @@ public class MainApp {
             }
         }
 
-        return 8080;
+        return 9000;
     }
 
     private static int startWebServer(PasswordManagerWebServer webServer, String[] args) {
