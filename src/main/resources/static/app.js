@@ -491,6 +491,8 @@ async function deleteCredential(credentialId) {
 
 async function handleDocumentSave(event) {
     event.preventDefault();
+    event.stopPropagation();
+
     const selectedFile = documentFileInput.files[0];
     const validationError = validateDocumentInput(documentTitleInput.value.trim(), selectedFile);
     if (validationError) {

@@ -39,6 +39,7 @@ public final class WebUtils {
 
     public static void sendJson(HttpExchange exchange, int statusCode, String json) throws IOException {
         byte[] response = json.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Cache-Control", "no-store");
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
         exchange.sendResponseHeaders(statusCode, response.length);
 
@@ -55,6 +56,7 @@ public final class WebUtils {
             }
 
             byte[] response = inputStream.readAllBytes();
+            exchange.getResponseHeaders().set("Cache-Control", "no-store");
             exchange.getResponseHeaders().set("Content-Type", contentType);
             exchange.sendResponseHeaders(200, response.length);
 
