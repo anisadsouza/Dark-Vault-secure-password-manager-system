@@ -367,12 +367,12 @@ mvn -Dmaven.repo.local=.m2 compile org.codehaus.mojo:exec-maven-plugin:3.5.0:jav
 The terminal will print a URL such as:
 
 ```text
-Dark Vault is running at http://localhost:8080
+Dark Vault is running at http://localhost:9000
 ```
 
 Open that URL in Chrome.
 
-If port `8080` is busy, the application automatically tries:
+If port `9000` is busy, the application automatically tries:
 
 - `8081`
 - `8082`
