@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Dark Vault",
+  "description": "A cyber-themed password manager popup built as a Chrome extension.",
+  "version": "1.0.0",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_title": "Dark Vault",
+    "default_popup": "popup.html"
+  }
+}
