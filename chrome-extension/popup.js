@@ -86,12 +86,12 @@ async function initializeExtension() {
     const session = await getStoredSession();
 
     if (account && session?.username === account.username) {
-        currentUser = account.username;
-        welcomeText.textContent = `Welcome back, ${currentUser}.`;
-        showAppView();
-        await loadCredentials();
-        updateSaveButtonState();
+        await openVaultForUser(account.username);
         return;
+    }
+
+    if (session && (!account || session.username !== account.username)) {
+        await removeStoredValue("local", SESSION_KEY);
     }
 
     showAuthView(account ? "login" : "register");
@@ -109,82 +109,82 @@ function switchAuthTab(tabName) {
 async function handleRegister(event) {
     event.preventDefault();
 
-    const username = registerUsernameInput.value.trim();
-    const password = registerPasswordInput.value;
-    const confirmPassword = registerConfirmPasswordInput.value;
-    const existingAccount = await getStoredAccount();
+    try {
+        const username = registerUsernameInput.value.trim();
+        const password = registerPasswordInput.value;
+        const confirmPassword = registerConfirmPasswordInput.value;
+        const existingAccount = await getStoredAccount();
 
-    if (existingAccount) {
-        showAuthMessage("An extension account already exists. Please log in.", true);
+        if (existingAccount) {
+            showAuthMessage("An extension account already exists. Please log in.", true);
+            switchAuthTab("login");
+            return;
+        }
+
+        const validationError = validateAuthInput(username, password, true);
+        if (validationError) {
+            showAuthMessage(validationError, true);
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            showAuthMessage("Passwords do not match", true);
+            return;
+        }
+
+        const account = {
+            username,
+            passwordHash: await hashValue(password)
+        };
+
+        await setStoredValue("local", ACCOUNT_KEY, account);
+        await removeStoredValue("local", SESSION_KEY);
+
+        registerForm.reset();
+        updateStrengthMeter("", registerStrengthMeter, registerStrengthFill, registerStrengthText);
         switchAuthTab("login");
-        return;
+        loginUsernameInput.value = username;
+        showAuthMessage("Account created successfully. Please log in to enter the vault.", false);
+    } catch (error) {
+        console.error("Registration failed:", error);
+        showAuthMessage("Could not create account. Reload the extension and try again.", true);
     }
-
-    const validationError = validateAuthInput(username, password, true);
-    if (validationError) {
-        showAuthMessage(validationError, true);
-        return;
-    }
-
-    if (password !== confirmPassword) {
-        showAuthMessage("Passwords do not match", true);
-        return;
-    }
-
-    const account = {
-        username,
-        passwordHash: await hashValue(password)
-    };
-
-    await setStoredValue("local", ACCOUNT_KEY, account);
-    await setStoredValue("local", SESSION_KEY, {
-        username
-    });
-
-    currentUser = username;
-    registerForm.reset();
-    updateStrengthMeter("", registerStrengthMeter, registerStrengthFill, registerStrengthText);
-    welcomeText.textContent = `Welcome back, ${currentUser}.`;
-    showAuthMessage("Account created successfully.", false);
-    showAppView();
-    await loadCredentials();
-    updateSaveButtonState();
 }
 
 async function handleLogin(event) {
     event.preventDefault();
 
-    const username = loginUsernameInput.value.trim();
-    const password = loginPasswordInput.value;
-    const validationError = validateAuthInput(username, password, false);
-    if (validationError) {
-        showAuthMessage(validationError, true);
-        return;
+    try {
+        const username = loginUsernameInput.value.trim();
+        const password = loginPasswordInput.value;
+        const validationError = validateAuthInput(username, password, false);
+        if (validationError) {
+            showAuthMessage(validationError, true);
+            return;
+        }
+
+        const account = await getStoredAccount();
+        if (!account) {
+            showAuthMessage("No extension account found. Register once, then log in.", true);
+            return;
+        }
+
+        const passwordHash = await hashValue(password);
+        if (account.username !== username || account.passwordHash !== passwordHash) {
+            showAuthMessage("Invalid username or password", true);
+            return;
+        }
+
+        await setStoredValue("local", SESSION_KEY, {
+            username
+        });
+
+        loginForm.reset();
+        await openVaultForUser(username);
+    } catch (error) {
+        console.error("Login failed:", error);
+        showAuthMessage("Could not log in. Reload the extension and try again.", true);
     }
-
-    const account = await getStoredAccount();
-    if (!account) {
-        showAuthMessage("No account found. Please register first.", true);
-        switchAuthTab("register");
-        return;
-    }
-
-    const passwordHash = await hashValue(password);
-    if (account.username !== username || account.passwordHash !== passwordHash) {
-        showAuthMessage("Invalid username or password", true);
-        return;
-    }
-
-    await setStoredValue("local", SESSION_KEY, {
-        username
-    });
-
-    currentUser = username;
-    loginForm.reset();
-    welcomeText.textContent = `Welcome back, ${currentUser}.`;
-    showAppView();
-    await loadCredentials();
-    updateSaveButtonState();
 }
 
 async function handleLogout() {
@@ -212,6 +212,14 @@ function showAppView() {
     authView.classList.add("hidden");
     appView.classList.remove("hidden");
     showAuthMessage("", false);
+}
+
+async function openVaultForUser(username) {
+    currentUser = username;
+    welcomeText.textContent = `Welcome back, ${currentUser}.`;
+    showAppView();
+    await loadCredentials();
+    updateSaveButtonState();
 }
 
 async function handleSaveCredential(event) {
@@ -561,33 +569,52 @@ function getStoredValue(areaName, key) {
     }
 
     return new Promise(resolve => {
-        storageArea.get([key], result => {
-            resolve(result ? result[key] || null : null);
-        });
+        try {
+            storageArea.get([key], result => {
+                if (chrome.runtime?.lastError) {
+                    resolve(readBrowserFallback(key));
+                    return;
+                }
+
+                resolve(result ? result[key] || null : null);
+            });
+        } catch (error) {
+            resolve(readBrowserFallback(key));
+        }
     });
 }
 
 function setStoredValue(areaName, key, value) {
+    writeBrowserFallback(key, value);
+
     const storageArea = getStorageArea(areaName);
     if (!storageArea) {
-        writeBrowserFallback(key, value);
         return Promise.resolve();
     }
 
     return new Promise(resolve => {
-        storageArea.set({ [key]: value }, resolve);
+        try {
+            storageArea.set({ [key]: value }, resolve);
+        } catch (error) {
+            resolve();
+        }
     });
 }
 
 function removeStoredValue(areaName, key) {
+    localStorage.removeItem(key);
+
     const storageArea = getStorageArea(areaName);
     if (!storageArea) {
-        localStorage.removeItem(key);
         return Promise.resolve();
     }
 
     return new Promise(resolve => {
-        storageArea.remove(key, resolve);
+        try {
+            storageArea.remove(key, resolve);
+        } catch (error) {
+            resolve();
+        }
     });
 }
 
