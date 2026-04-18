@@ -16,6 +16,7 @@ const registerConfirmPasswordInput = document.getElementById("register-confirm-p
 const toggleLoginPasswordButton = document.getElementById("toggle-login-password");
 const toggleRegisterPasswordButton = document.getElementById("toggle-register-password");
 const toggleConfirmPasswordButton = document.getElementById("toggle-confirm-password");
+const registerGenerateButton = document.getElementById("register-generate-button");
 const authMessage = document.getElementById("auth-message");
 const registerStrengthMeter = document.getElementById("register-strength-meter");
 const registerStrengthFill = document.getElementById("register-strength-fill");
@@ -62,6 +63,7 @@ function bindEvents() {
     registerForm.addEventListener("submit", handleRegister);
     logoutButton.addEventListener("click", handleLogout);
     registerPasswordInput.addEventListener("input", () => updateStrengthMeter(registerPasswordInput.value, registerStrengthMeter, registerStrengthFill, registerStrengthText));
+    registerGenerateButton.addEventListener("click", handleGenerateRegisterPassword);
     credentialForm.addEventListener("submit", handleSaveCredential);
     siteNameInput.addEventListener("input", updateSaveButtonState);
     siteUsernameInput.addEventListener("input", updateSaveButtonState);
@@ -263,6 +265,18 @@ function handleGeneratePassword() {
     updateStrengthMeter(sitePasswordInput.value, strengthMeter, strengthFill, strengthText);
     updateSaveButtonState();
     showFormMessage("Strong password generated.", false);
+}
+
+function handleGenerateRegisterPassword() {
+    const generatedPassword = generateStrongPassword();
+    registerPasswordInput.value = generatedPassword;
+    registerConfirmPasswordInput.value = generatedPassword;
+    registerPasswordInput.type = "text";
+    registerConfirmPasswordInput.type = "text";
+    toggleRegisterPasswordButton.textContent = "Hide";
+    toggleConfirmPasswordButton.textContent = "Hide";
+    updateStrengthMeter(generatedPassword, registerStrengthMeter, registerStrengthFill, registerStrengthText);
+    showAuthMessage("Strong password generated. You can hide it before registering.", false);
 }
 
 function togglePasswordInput(input, button) {
