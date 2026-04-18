@@ -62,20 +62,26 @@ This is the main module of the project.
 This is a secondary feature below the password manager.
 
 - Upload document/file records
+- Support PDF, Word, CSV, text, and image files
+- Validate file type before saving
+- Limit uploaded files to 10 MB
 - Store actual files locally in `vault-files/`
 - Store file metadata in SQLite
 - Search documents by title, file name, or category
 - Download stored files
 - Delete stored files
 
-Supported file examples:
+Supported file types:
 
-- PDF
-- Word documents
-- CSV files
-- images
-- text files
-- other common local files
+| File Category | Supported Extensions |
+| --- | --- |
+| PDF documents | `.pdf` |
+| Word documents | `.doc`, `.docx` |
+| CSV files | `.csv` |
+| Text files | `.txt` |
+| Images | `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.svg` |
+
+Unsupported files are rejected with a clear validation message.
 
 ## Important Storage Explanation
 
@@ -90,6 +96,8 @@ Dark Vault uses two types of storage:
 | Actual uploaded files | Local `vault-files/` folder |
 
 This design keeps SQLite as the main relational database while avoiding large file BLOB storage inside the database. Instead, SQLite stores the file path and metadata, and the actual file is saved locally.
+
+This means uploaded PDFs, Word documents, CSV files, and images can be downloaded again later from the browser dashboard as long as the local `vault-files/` folder is kept with the project.
 
 ## System Architecture
 
@@ -262,11 +270,13 @@ The project uses SQLite with three main relational tables.
 
 | Operation | Feature |
 | --- | --- |
-| Create | Upload/save document |
+| Create | Upload/save supported document or image |
 | Read | View document list |
 | Delete | Delete document |
 | Search | Search by title, file name, or category |
 | Download | Download stored file |
+
+Document update/edit is listed as a future enhancement. The implemented document module currently supports create, read, delete, search, and download.
 
 ## Project Structure
 
@@ -390,7 +400,7 @@ Always use the exact URL printed in the terminal.
    - reveal/copy passwords
    - edit or delete credentials
 4. Scroll below the password vault to use the secondary document vault:
-   - choose a file
+   - choose a supported file such as PDF, Word, CSV, TXT, JPG, PNG, GIF, WebP, or SVG
    - enter title/category/notes
    - save the document
    - download or delete the document later
@@ -415,6 +425,14 @@ The SQLite database stores:
 - date added
 
 The actual file content is stored locally, not inside Git.
+
+Supported uploaded file extensions are:
+
+```text
+.pdf, .doc, .docx, .csv, .txt, .jpg, .jpeg, .png, .gif, .webp, .svg
+```
+
+The browser validates these formats before upload, and the Java backend validates them again before writing the file.
 
 ## Git Ignore Notes
 
@@ -442,6 +460,7 @@ Examples:
 - site name cannot be empty
 - file title cannot be empty
 - file must be selected before saving
+- unsupported document/image formats are rejected
 - invalid characters such as `<` and `>` are rejected
 - uploaded files are limited to 10 MB
 
@@ -459,6 +478,7 @@ Implemented security features:
 - reveal buttons are explicit user actions
 - local session cookie is used for the browser session
 - uploaded files are stored outside Git in `vault-files/`
+- document uploads are restricted to common document and image formats
 
 Important academic note:
 

@@ -118,7 +118,7 @@
                         <div>
                             <p class="eyebrow">SECONDARY VAULT</p>
                             <h3>Secure Documents</h3>
-                            <p>Store PDFs, Word files, CSVs, images, and other important files after your password vault.</p>
+                            <p>Store PDFs, Word files, CSVs, TXT files, and images after your password vault.</p>
                         </div>
                     </div>
 
@@ -133,7 +133,8 @@
                         </div>
                         <div>
                             <label>Select File</label>
-                            <input id="document-file" name="file" type="file" required>
+                            <input id="document-file" name="file" type="file" accept=".pdf,.doc,.docx,.csv,.txt,.jpg,.jpeg,.png,.gif,.webp,.svg" required>
+                            <p class="file-help">Supported: PDF, Word, CSV, TXT, JPG, PNG, GIF, WebP, and SVG. Maximum size: 10 MB.</p>
                         </div>
                         <div>
                             <label>Notes</label>

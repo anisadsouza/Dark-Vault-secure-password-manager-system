@@ -567,6 +567,13 @@ body {
     font-family: Menlo, Monaco, Consolas, monospace;
 }
 
+.file-help {
+    margin: 8px 0 0;
+    color: var(--text-soft);
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
 .document-form textarea,
 .document-form .status-text,
 .document-form .primary-button {

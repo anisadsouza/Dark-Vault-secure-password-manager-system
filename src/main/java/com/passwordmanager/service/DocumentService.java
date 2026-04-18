@@ -8,11 +8,29 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
 public class DocumentService {
     private static final long MAX_FILE_SIZE_BYTES = 10L * 1024L * 1024L;
+    private static final List<String> SUPPORTED_EXTENSIONS = List.of(
+            ".pdf", ".doc", ".docx", ".csv", ".txt",
+            ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"
+    );
+    private static final List<String> SUPPORTED_MIME_TYPES = List.of(
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "text/csv",
+            "application/csv",
+            "text/plain",
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/webp",
+            "image/svg+xml"
+    );
     private final DocumentDAO documentDAO;
     private final Path storageRoot;
 
@@ -27,7 +45,7 @@ public class DocumentService {
 
     public boolean saveDocument(int userId, String title, String originalFileName, String mimeType,
                                 String category, String notes, String base64FileData) {
-        validateDocumentInput(title, originalFileName, base64FileData);
+        validateDocumentInput(title, originalFileName, mimeType, base64FileData);
 
         try {
             byte[] fileBytes = Base64.getDecoder().decode(stripDataUrlPrefix(base64FileData));
@@ -108,13 +126,17 @@ public class DocumentService {
         return deleted;
     }
 
-    private void validateDocumentInput(String title, String originalFileName, String base64FileData) {
+    private void validateDocumentInput(String title, String originalFileName, String mimeType, String base64FileData) {
         validateRequired(title, "Document title");
         validateRequired(originalFileName, "File name");
         validateRequired(base64FileData, "File data");
 
         if (!isSafeText(title) || !isSafeText(originalFileName)) {
             throw new IllegalArgumentException("Invalid input.");
+        }
+
+        if (!isSupportedFile(originalFileName, mimeType)) {
+            throw new IllegalArgumentException("Unsupported file type. Use PDF, Word, CSV, TXT, JPG, PNG, GIF, WebP, or SVG.");
         }
     }
 
@@ -154,6 +176,23 @@ public class DocumentService {
     private String extensionOf(String fileName) {
         int dotIndex = fileName.lastIndexOf('.');
         return dotIndex >= 0 ? fileName.substring(dotIndex) : "";
+    }
+
+    private boolean hasSupportedExtension(String fileName) {
+        String lowerCaseFileName = fileName.toLowerCase(Locale.ROOT);
+        return SUPPORTED_EXTENSIONS.stream().anyMatch(lowerCaseFileName::endsWith);
+    }
+
+    private boolean hasSupportedMimeType(String mimeType) {
+        if (mimeType == null || mimeType.isBlank()) {
+            return false;
+        }
+
+        return SUPPORTED_MIME_TYPES.contains(mimeType.toLowerCase(Locale.ROOT).trim());
+    }
+
+    private boolean isSupportedFile(String fileName, String mimeType) {
+        return hasSupportedExtension(fileName) || hasSupportedMimeType(mimeType);
     }
 
     private Path resolveStoredPath(SecureDocument document) {

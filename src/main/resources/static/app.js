@@ -53,6 +53,21 @@ const documentClearButton = document.getElementById("document-clear-button");
 const documentMessage = document.getElementById("document-message");
 const documentGrid = document.getElementById("document-grid");
 
+const SUPPORTED_DOCUMENT_EXTENSIONS = [".pdf", ".doc", ".docx", ".csv", ".txt", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"];
+const SUPPORTED_DOCUMENT_TYPES = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/csv",
+    "application/csv",
+    "text/plain",
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/svg+xml"
+];
+
 let currentSession = null;
 let currentCredentials = [];
 let currentDocuments = [];
@@ -360,7 +375,7 @@ function renderDocumentGrid(documents) {
             <div class="preview-card">
                 <p class="eyebrow">DOCUMENT VAULT</p>
                 <h3>No documents stored yet.</h3>
-                <p>Add PDFs, Word files, CSVs, images, or other files here after managing your passwords above.</p>
+                <p>Add PDFs, Word files, CSVs, TXT files, or images here after managing your passwords above.</p>
             </div>
         `;
         return;
@@ -678,11 +693,23 @@ function validateDocumentInput(title, selectedFile) {
         return "Invalid input";
     }
 
+    if (!isSupportedDocumentFile(selectedFile)) {
+        return "Unsupported file type. Use PDF, Word, CSV, TXT, JPG, PNG, GIF, WebP, or SVG.";
+    }
+
     if (selectedFile.size > 10 * 1024 * 1024) {
         return "File must be 10 MB or smaller";
     }
 
     return "";
+}
+
+function isSupportedDocumentFile(file) {
+    const fileName = file.name.toLowerCase();
+    const fileType = (file.type || "").toLowerCase();
+    const hasSupportedExtension = SUPPORTED_DOCUMENT_EXTENSIONS.some(extension => fileName.endsWith(extension));
+    const hasSupportedMimeType = SUPPORTED_DOCUMENT_TYPES.includes(fileType);
+    return hasSupportedExtension || hasSupportedMimeType;
 }
 
 function validatePassword(password) {
