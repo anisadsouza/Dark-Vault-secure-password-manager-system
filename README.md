@@ -1,8 +1,8 @@
 # Dark Vault: Secure Digital Vault System
 
-Dark Vault is a Java-based secure vault application with the **password manager as the main feature** and a secondary secure document vault for storing important files such as PDFs, Word documents, CSV files, and images.
+Dark Vault is a Java-based secure vault application for managing encrypted credentials and sensitive documents. It features a **password manager** as the primary module, along with a secondary secure **document vault** for storing files such as PDFs, Word documents, CSV files and images.
 
-The project was built for a Java + JDBC software engineering assignment. It demonstrates Object-Oriented Programming, layered architecture, relational database design, CRUD operations, input validation, exception handling, and persistent storage using SQLite.
+The project demonstrates key software engineering concepts including Object-Oriented Programming, layered architecture, relational database design, CRUD operations, input validation, exception handling, and persistent storage using SQLite.
 
 ## Main Purpose
 
