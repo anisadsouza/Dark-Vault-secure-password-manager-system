@@ -147,7 +147,6 @@ Responsible for persistent relational data.
 The project contains multiple classes that represent models, services, DAO objects, and the web server.
 
 Examples:
-
 - `User`
 - `StandardUser`
 - `Credential`
@@ -162,7 +161,6 @@ Examples:
 Model classes use private fields with public getters and setters.
 
 Examples:
-
 - `User`
 - `Credential`
 - `SecureDocument`
@@ -176,7 +174,6 @@ Examples:
 Polymorphism is demonstrated through method overriding and interface-based design.
 
 Examples:
-
 - `StandardUser#getDisplayRole()`
 - `EncryptionService` implemented by `AESEncryptionService`
 - `CredentialDAO` implemented by `CredentialDAOImpl`
